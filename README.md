@@ -1,4 +1,4 @@
 # Vool
 C++ meta programming library
 
-Not all code was written by, for example named tuple. If there is code I copied, it will be marked in source code.
+Not all code was written by me, for example named tuple was written by Victor Laskin. If the code is copied, it is marked in the source code.
