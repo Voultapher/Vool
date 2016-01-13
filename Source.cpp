@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Vool.h"
+#include "Test.h"
 
 // Here some example use cases are shown
 
@@ -29,6 +30,17 @@ int main() {
 	printf("The cat named %s has %.3f legs\n", cat[param("name")], legs);
 
 	//cat[param("nam")] = "New"; // compiler error
+
+	int var;
+	bool res = std::is_arithmetic<decltype(var)>::value;
+
+	auto addRes = add<char, double>(22, 44.4f);
+	std::cout << "The result for add is: " << addRes << std::endl;
+
+	vool::util::largest_type<char, bool, int, double> manquw;
+
+	//using rasmulun = vool::util::largestType<int, char, void>::type;
+	//rasmulun asmal;
 
 	char tmp = std::cin.get(); // pause for user input
 

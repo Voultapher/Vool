@@ -18,7 +18,9 @@ namespace util
 	// variadic compile time property check
 	template < bool CONDITION > struct true_if : std::conditional< CONDITION, std::true_type, std::false_type >::type {};
 
-	template<typename T> struct is_arithmetic : std::is_arithmetic<T> { };
+	template<typename T> struct is_arithmetic : std::is_arithmetic<T> {};
+	template<typename T> struct is_floating_point : std::is_floating_point<T> {};
+	template<typename T> struct is_double : std::is_same<T, double> {};
 	template<typename A, typename B> struct is_convertible_to : std::is_convertible<A, B> {};
 
 	template<bool...> struct bool_pack;
@@ -27,10 +29,31 @@ namespace util
 	template<bool... b> using some_true = true_if<!all_true<b...>::value && !all_false<b...>::value>;
 
 	template<typename... Ts> struct all_are_arithmetic : true_if<all_true<is_arithmetic<Ts>::value...>::value> {};
+	template<typename... Ts> struct none_are_floating_point : true_if<all_false<is_floating_point<Ts>::value...>::value> {};
+	template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
 	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<is_convertible_to<TO, FROM>::value...>::value> {};
 
+	// smallest adequate data type for arithmetic calculation
+	template<typename... Ts> using needed_float_type = std::conditional_t<none_are_double<Ts...>::value, float, double>;
+
+	template<typename A, typename B> using larger_type = std::conditional_t<sizeof(A) >= sizeof(B), A, B>;
+	template<typename...> struct largest_helper;
+	template<typename A, typename B, typename... Ts> struct largest_helper<A, B, Ts...>
+	{
+		using type = larger_type<A, typename largest_helper<B, Ts...>::type>; // yip that is compile time recursion, :(
+	};
+	template<typename A, typename B> struct largest_helper<A, B>
+	{
+		using type = larger_type<A, B>; // exactly two types
+	};
+	template<typename A> struct largest_helper<A> { using type = A; }; // exactly one type
+	template<typename... Ts> using largest_type = typename largest_helper<Ts...>::type;
+
+
+	template<typename... Ts> using needed_arith_type = std::conditional_t<none_are_floating_point<Ts...>::value, largest_type<Ts...>, needed_float_type<Ts...>>;
+
 	// tuple iteration
-	template<typename... Ts> void wrapper(Ts&&... args) { }
+	template<typename... Ts> constexpr void wrapper(Ts&&... args) { }
 
 	// simple iteratio, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
@@ -169,6 +192,7 @@ auto make_named_tuple(Args&&... args)
 
 template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tuple) with arithmetic operations
 {
+	using arith_t = util::needed_arith_type<Ts...>;
 
 	explicit ArithmeticStruct(Ts... args)
 	{ // only constructible if all types are arithmetic, ensures that arithmetic operations are posible
@@ -206,16 +230,16 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 	}
 
 	// calc sum
-	double sum()
+	arith_t sum()
 	{
-		double sum = 0; // the data type is an assumption that may fail
+		arith_t sum = 0;
 		util::for_each_in_tuple(local, sum, [](const auto& element, auto& sum) { sum += element; });
 		return sum;
 	}
 	// calc product
-	double product()
+	arith_t product()
 	{
-		double product = front(); // the data type is an assumption that may fail
+		arith_t product = front();
 		if (front() != 0)
 		{
 			util::for_each_in_tuple(local, product, [](const auto& element, auto& product) { product *= element; });
