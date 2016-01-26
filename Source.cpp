@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "Vool.h"
-#include "Test.h"
+//#include "Test.h"
 
 // Here some example use cases are shown
 
@@ -17,12 +17,22 @@ int main() {
 
 	result.doForAll([](const auto& element) {std::cout << element << std::endl; }); // prints all elements, although may out of order
 
-	auto emptyTest = vool::ArithmeticStruct<>();
-	emptyTest = emptyTest + emptyTest;
+	//auto emptyTest = vool::ArithmeticStruct<>(); // does not compile
+	//emptyTest = emptyTest + emptyTest;
 	//std::cout << emptyTest.are_all_positive() << std::endl; // compiler error
 
 	std::vector<int> v;
 	//auto wrongTypeTest = vool::ArithmeticStruct<int, float, decltype(v)>(2, 3.f, v); // compiler error
+
+	auto floatMin = std::numeric_limits<float>::min();
+	auto floatMax = std::numeric_limits<float>::max();
+	auto doubleMin = std::numeric_limits<double>::min();
+	auto doubleMax = std::numeric_limits<double>::max();
+	auto charMin = std::numeric_limits<char>::min();
+	auto charMax = std::numeric_limits<char>::max();
+	std::cout << "Float limits: " << floatMin << " " << floatMax << std::endl;
+	std::cout << "Double limits: " << doubleMin << " " << doubleMax << std::endl;
+	std::cout << "Char limits: " << charMin << " " << charMax << std::endl;
 
 	auto cat = vool::make_named_tuple(param("name") = "Mean", param("age") = 5, param("legs") = 3.3f);
 	cat[param("legs")] = 27.67f;
@@ -34,10 +44,9 @@ int main() {
 	int var;
 	bool res = std::is_arithmetic<decltype(var)>::value;
 
-	auto addRes = add<char, double>(22, 44.4f);
-	std::cout << "The result for add is: " << addRes << std::endl;
+	vool::util::needed_arith_type<char, bool, int, float> manquw = 2;
+	vool::util::needed_arith_type<int64_t, uint64_t> impossibleRange = 5; // there is no int type able to hold all the data, so it is double
 
-	vool::util::largest_type<char, bool, int, double> manquw;
 
 	//using rasmulun = vool::util::largestType<int, char, void>::type;
 	//rasmulun asmal;
