@@ -15,6 +15,7 @@ int main() {
 	auto result = cookie1 * cookie2 + cookie1 - cookie2;
 	std::cout << "Result sum is: " << result.sum() << " and the first item is: " << result.front() << std::endl;
 
+	std::cout << "\nPrinting all elements of result: \n";
 	result.doForAll([](const auto& element) {std::cout << element << std::endl; }); // prints all elements, although may out of order
 
 	//auto emptyTest = vool::ArithmeticStruct<>(); // does not compile
@@ -30,14 +31,14 @@ int main() {
 	auto doubleMax = std::numeric_limits<double>::max();
 	auto charMin = std::numeric_limits<char>::min();
 	auto charMax = std::numeric_limits<char>::max();
-	std::cout << "Float limits: " << floatMin << " " << floatMax << std::endl;
+	std::cout << "\nFloat limits: " << floatMin << " " << floatMax << std::endl;
 	std::cout << "Double limits: " << doubleMin << " " << doubleMax << std::endl;
 	std::cout << "Char limits: " << charMin << " " << charMax << std::endl;
 
 	auto cat = vool::make_named_tuple(param("name") = "Mean", param("age") = 5, param("legs") = 3.3f);
 	cat[param("legs")] = 27.67f;
 	auto legs = cat[param("legs")];
-	printf("The cat named %s has %.3f legs\n", cat[param("name")], legs);
+	printf("\nThe cat named %s has %.3f legs\n", cat[param("name")], legs);
 
 	//cat[param("nam")] = "New"; // compiler error
 
@@ -46,10 +47,6 @@ int main() {
 
 	vool::util::needed_arith_type<char, bool, int, float> manquw = 2;
 	vool::util::needed_arith_type<int64_t, uint64_t> impossibleRange = 5; // there is no int type able to hold all the data, so it is double
-
-
-	//using rasmulun = vool::util::largestType<int, char, void>::type;
-	//rasmulun asmal;
 
 	char tmp = std::cin.get(); // pause for user input
 

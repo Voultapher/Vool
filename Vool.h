@@ -18,20 +18,17 @@ namespace util
 	// variadic compile time property check
 	template < bool CONDITION > struct true_if : std::conditional< CONDITION, std::true_type, std::false_type >::type {};
 
-	template<typename T> struct is_arithmetic : std::is_arithmetic<T> {};
-	template<typename T> struct is_floating_point : std::is_floating_point<T> {};
 	template<typename T> struct is_double : std::is_same<T, double> {};
-	template<typename A, typename B> struct is_convertible_to : std::is_convertible<A, B> {};
 
 	template<bool...> struct bool_pack;
 	template<bool... b> using all_true = std::is_same<bool_pack<true, b...>, bool_pack<b..., true>>;
 	template<bool... b> using all_false = std::is_same<bool_pack<false, b...>, bool_pack<b..., false>>;
 	template<bool... b> using some_true = true_if<!all_true<b...>::value && !all_false<b...>::value>;
 
-	template<typename... Ts> struct all_are_arithmetic : true_if<all_true<is_arithmetic<Ts>::value...>::value> {};
-	template<typename... Ts> struct none_are_floating_point : true_if<all_false<is_floating_point<Ts>::value...>::value> {};
+	template<typename... Ts> struct all_are_arithmetic : true_if<all_true<std::is_arithmetic<Ts>::value...>::value> {};
 	template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
-	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<is_convertible_to<TO, FROM>::value...>::value> {};
+	template<typename... Ts> struct none_are_floating_point : true_if<all_false<std::is_floating_point<Ts>::value...>::value> {};
+	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
 
 	// smallest adequate data type for arithmetic calculation
 	template<typename... Ts> using needed_float_type = std::conditional_t<none_are_double<Ts...>::value, float, double>;
@@ -65,7 +62,7 @@ namespace util
 		static_assert(all_are_arithmetic<Ts...>::value, "Using need_arith_type, all types have to be arithmetic!");
 		using type = std::conditional_t<none_are_floating_point<Ts...>::value, largest_type<Ts...>, needed_float_type<Ts...>>;
 	};
-	template<typename... Ts> using needed_arith_type = typename needed_arith_checker<Ts...>::type; // only works for types smaller with max 64-bit precision
+	template<typename... Ts> using needed_arith_type = typename needed_arith_checker<Ts...>::type; // only works for types with max 64-bit precision
 
 
 																									// tuple iteration
