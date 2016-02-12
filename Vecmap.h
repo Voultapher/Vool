@@ -235,6 +235,7 @@ public:
 	// erase elements
 	void erase(const K& key)
 	{ // key erase: container stays sorted
+		if (!_is_sorted) sort();
 		auto first = std::lower_bound(_buckets.begin(), _buckets.end(), key);
 		if (first != _buckets.end())
 		{
