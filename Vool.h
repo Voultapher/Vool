@@ -68,7 +68,7 @@ namespace util
 																									// tuple iteration
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
-	// simple iteratio, only tuple as argument
+	// simple iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
 		wrapper((func(std::get<Is>(tuple)), 0)...);

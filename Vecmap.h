@@ -109,7 +109,7 @@ private:
 	void move_internal(vec_map<K, V>&& other)
 	{
 		reserve(other.capacity());
-		destroy_internal()
+		destroy_internal();
 			_buckets = std::move(other.get_internal_vec());
 	}
 
@@ -227,7 +227,7 @@ public:
 		if (!_is_sorted) sort();
 		auto res = std::lower_bound(_buckets.begin(), _buckets.end(), key);
 		if (res != _buckets.end())
-			return res->getValue()
+			return res->getValue();
 		else
 			throw std::out_of_range("vec_map key was not valid!");
 	}
@@ -256,7 +256,7 @@ public:
 			auto start = std::lower_bound(_buckets.begin(), _buckets.end(), local.front());
 			auto end = std::lower_bound(_buckets.begin(), _buckets.end(), local.back());
 			if (start != _buckets.end() && end != _buckets.end())
-				erase(start, end);
+				erase(start, ++end); // end has to point behind last erase key
 			else
 				throw std::out_of_range("Either the highest or lowest key was not valid!");
 		}

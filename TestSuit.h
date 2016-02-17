@@ -1,0 +1,264 @@
+// Generic perfomance test suit using GNP to visualize results
+
+#pragma once
+
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <string>
+#include <tuple>
+
+#include <chrono>
+#include <random>
+
+#include "GNP.h"
+
+namespace vool
+{
+
+struct Result
+{
+private:
+	size_t _size;
+	double _fullTime;
+	double _averageTime;
+	std::string _taskName;
+
+public:
+	Result(const size_t size, const double fT, const double aT, const std::string& tN) :
+		_size(size), _fullTime(fT), _averageTime(aT), _taskName(tN) {}
+
+	const size_t getSize() const { return _size; }
+	const double getFullTime() const { return _fullTime; }
+	const double getAverageTime() const { return _averageTime; }
+	const std::string& getTaskName() const { return _taskName; }
+};
+
+template<typename TestFunc> class Test
+{
+
+private:
+
+	//Container_t _container;
+	TestFunc _testFunc;
+	Result _result;
+
+	std::string _testName;
+
+	inline const auto& timerStart() const
+	{
+		return std::chrono::high_resolution_clock::now();
+	}
+
+	inline void timerEnd(const std::chrono::high_resolution_clock::time_point& start, const size_t iterations)
+	{
+		std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now(); // save end time
+
+		double deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count(); // calculate difference in nanosecons
+		double deltaTimeSec = deltaTimeNano / 1e9;
+		double averageIndividualTime = deltaTimeNano / iterations; // calculate how long each iteration took on average
+
+		_result = std::move(Result(iterations, deltaTimeNano, averageIndividualTime, _testName));
+	}
+
+public:
+
+	explicit Test(TestFunc& func, const std::string& testName)
+		: _testFunc(func), _testName(testName), _result(0, 0, 0, "No Test")
+	{
+
+	}
+
+	void runTest(const size_t size)
+	{
+		auto start = timerStart();
+		_testFunc(size);
+		timerEnd(start, size);
+	}
+
+	const Result& getResult() const { return _result; }
+};
+
+template<typename Func> static auto createTest(const std::string& testName, Func func)
+{
+	return std::move(Test<Func>(std::ref(func), testName));
+}
+
+template<typename... Tests> struct TestCategory
+{
+private:
+	std::tuple<Tests...> _tests;
+	std::vector<std::vector<Result>> _results;
+	std::string _categoryName;
+
+	// simple iteration, only tuple as argument
+	template<class F, class... Ts, std::size_t... Is>
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
+		int helper[] = { 0, (func(std::get<Is>(tuple)), 0)... }; // execution order matters
+		(void)helper;
+	}
+
+	template<class F, class...Ts>
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func) {
+		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
+	}
+
+public:
+	explicit TestCategory(const std::string& categoryName, Tests&... tests)
+		: _categoryName(categoryName), _tests(std::make_tuple(tests...)) { }
+
+	void runTestRange(const size_t minSize, const size_t maxSize)
+	{ // all test will be executed in construction order
+		std::vector<std::vector<Result>> local(sizeof...(Tests)); // resize to fit amount of tests
+
+																	// for every test
+		for (size_t size = minSize; size <= maxSize; size = size > 1 ? size * 1.5 : size + 1)
+		{
+			size_t i = 0;
+			for_each_in_tuple(_tests, [&i, size, &local](auto& element)
+			{
+				element.runTest(size);
+				local[i].push_back(element.getResult());
+				++i;
+			});
+		}
+		_results = std::move(local);
+	}
+
+	std::pair<decltype(_results), std::string> getResults() { return std::make_pair(_results, _categoryName); };
+};
+
+template<typename... Tests> static auto createTestCategory(const std::string& categoryName, Tests&... tests)
+{
+	return std::move(TestCategory<Tests...>(categoryName, tests...));
+}
+
+struct SuitConfiguration
+{
+	uint32_t xResolution;
+	uint32_t yResolution;
+	std::string gnuplotPath;
+	std::string xAxisName;
+	std::string yAxisName;
+	std::string resultDataPath;
+	std::string resultName;
+
+	explicit SuitConfiguration(uint32_t xRes = 1200, uint32_t yRes = 500, const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
+		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
+		const std::string& resultPath = "", const std::string& resName = "Result") // empty resultPath as a folder would have to be constructed
+		: xResolution(xRes), yResolution(yRes), gnuplotPath(gpPath), xAxisName(xName), yAxisName(yName),
+		resultDataPath(resultPath), resultName(resName) { }
+};
+
+// TestSuit
+template<typename... TestCategorys> class TestSuit
+{
+private:
+	std::tuple<TestCategorys...> _categorys;
+	std::vector<std::pair<std::vector<std::vector<Result>>, std::string>> _results; // oy
+
+	SuitConfiguration _suitConfiguration;
+
+	template<typename... Ts> void wrapper(Ts&&... args) { }
+
+	// simple iteration, only tuple as argument
+	template<class F, class... Ts, std::size_t... Is>
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
+		int helper[] = { 0, (func(std::get<Is>(tuple)), 0)... }; // execution order matters
+		(void)helper;
+	}
+
+	template<class F, class...Ts>
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func) {
+		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
+	}
+
+public:
+	explicit TestSuit(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
+		: _suitConfiguration(suitConfiguration), _categorys(std::make_tuple(categorys...)) { }
+
+	void runAllTests(const size_t minSize, const size_t maxSize)
+	{ // all test will be executed in construction order
+		if (maxSize > 0 && maxSize >= minSize)
+		{
+			_results.clear();
+			auto local = std::move(_results);
+
+			// for every category
+			for_each_in_tuple(_categorys, [minSize, maxSize, &local](auto& element)
+			{
+				element.runTestRange(minSize, maxSize);
+				local.push_back(element.getResults());
+			});
+			_results = std::move(local);
+		}
+	}
+
+	void renderResults()
+	{
+		Gnuplot plot(_suitConfiguration.gnuplotPath, false);
+		plot.setSaveMode(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
+		plot << "set samples 500";
+		plot.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+		plot.addLineStyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
+		plot.addLineStyle(3, "#9871FF", 2, 3, 7, 1.5f);
+		plot.addLineStyle(4, "#E8803A", 2, 3, 8, 1.5f);
+		plot.addLineStyle(5, "#46E86C", 2, 3, 9, 1.5f);
+		plot.addGrid();
+		plot.setAxis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
+
+		for (const auto& category : _results)
+		{
+			if (category.first.size() > 0)
+			{
+				plot.setOutput(_suitConfiguration.resultName + category.second);
+				std::vector<PlotData2D<double>> data;
+				size_t index = 0;
+				for (const auto& results : category.first)
+				{
+					std::vector<std::pair<double, double>> points;
+					for (const auto& result : results)
+						points.push_back(std::make_pair(result.getSize(), result.getFullTime()));
+					data.emplace_back(points, index + 1, index, results.back().getTaskName());
+					++index;
+				}
+				plot.plotData(data, _suitConfiguration.resultDataPath + category.second + ".dat");
+			}
+		}
+	}
+
+	const decltype(_results)& getResults() const { return _results; }
+};
+
+template<typename... TestCategorys> static auto createTestSuit(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
+{
+	return std::move(TestSuit<TestCategorys...>(suitConfiguration, categorys...));
+}
+
+template<typename K, typename Func> static auto createUniqueKeys(const size_t size, K startKey, Func keyFunc)
+{
+	std::vector<K> keyVals;
+
+	std::mt19937_64 generator(1337); // fixed seed for reproducibility
+	using rand_t = std::conditional_t < std::is_arithmetic<K>::value && !std::is_floating_point<K>::value, K, int64_t>;
+	std::uniform_int_distribution<int64_t> distribution(std::numeric_limits<rand_t>::min(), std::numeric_limits<rand_t>::max());
+	std::vector<rand_t> usedRandValues;
+	rand_t randVal;
+
+	for (size_t i = 0; i < size; ++i)
+	{
+		keyVals.push_back(startKey);
+		do
+		{ // ensure unique keys
+			randVal = distribution(generator);
+		} while (std::find(usedRandValues.begin(), usedRandValues.end(), randVal) != usedRandValues.end());
+		keyFunc(startKey, randVal);
+	}
+
+	return std::move(keyVals);
+}
+
+}

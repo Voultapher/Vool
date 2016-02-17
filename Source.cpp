@@ -2,12 +2,20 @@
 #include <iostream>
 #include <vector>
 
+#include "Tests\VecmapTest.h"
+#include "Tests\GNPTest.h"
+#include "Tests\TestSuitTest.h"
+
 #include "Vool.h"
-//#include "Test.h"
 
 // Here some example use cases are shown
 
-int main() {
+int main()
+{
+
+	vool::test_Vecmap();
+	vool::test_GNP();
+	vool::test_TestSuit();
 
 	using Ingredient = vool::ArithmeticStruct<float, int, double, char>;
 	auto cookie1 = Ingredient(3.4f, 42, 55.66, 'd');
@@ -46,7 +54,9 @@ int main() {
 	bool res = std::is_arithmetic<decltype(var)>::value;
 
 	vool::util::needed_arith_type<char, bool, int, float> manquw = 2;
+	std::common_type_t<char, bool, int, float> ctwonk = 2;
 	vool::util::needed_arith_type<int64_t, uint64_t> impossibleRange = 5; // there is no int type able to hold all the data, so it is double
+	std::common_type_t<int64_t, float, uint64_t> impossibleCT = 5;
 
 	char tmp = std::cin.get(); // pause for user input
 
