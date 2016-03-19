@@ -43,12 +43,13 @@ template<typename TestFunc> class Test
 private:
 
 	//Container_t _container;
+	bool _visible;
 	TestFunc _testFunc;
 	Result _result;
 
 	std::string _testName;
 
-	inline const auto& timerStart() const
+	inline const auto timerStart() const
 	{
 		return std::chrono::high_resolution_clock::now();
 	}
@@ -67,10 +68,9 @@ private:
 public:
 
 	explicit Test(TestFunc& func, const std::string& testName)
-		: _testFunc(func), _testName(testName), _result(0, 0, 0, "No Test")
-	{
+		: _visible(true), _testFunc(func), _testName(testName), _result(0, 0, 0, "No Test") { }
 
-	}
+	void setInvisible() { _visible = false; }
 
 	void runTest(const size_t size)
 	{
@@ -79,6 +79,7 @@ public:
 		timerEnd(start, size);
 	}
 
+	const bool isVisible() const { return _visible; }
 	const Result& getResult() const { return _result; }
 };
 
@@ -121,8 +122,11 @@ public:
 			for_each_in_tuple(_tests, [&i, size, &local](auto& element)
 			{
 				element.runTest(size);
-				local[i].push_back(element.getResult());
-				++i;
+				if (element.isVisible())
+				{
+					local[i].push_back(element.getResult());
+					++i;
+				}
 			});
 		}
 		_results = std::move(local);

@@ -9,6 +9,12 @@
 #include <type_traits>
 #include <stdexcept>
 
+#ifdef _WIN32
+#define pipe_open _popen
+#else
+#define pipe_open popen
+#endif
+
 namespace vool
 {
 
@@ -78,7 +84,7 @@ public:
 	explicit Gnuplot(std::string gnuplotPath, bool persist = true)
 	{
 		gnuplotPath += persist ? "\\gnuplot -persist" : "\\gnuplot";
-		_gnuPlotPipe = _popen(gnuplotPath.c_str(), "w");
+		_gnuPlotPipe = pipe_open(gnuplotPath.c_str(), "w");
 		if (_gnuPlotPipe == NULL)
 			throw std::exception(); // file not found
 	}
