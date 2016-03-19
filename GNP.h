@@ -11,8 +11,10 @@
 
 #ifdef _WIN32
 #define pipe_open _popen
+#define pipe_close _pclose
 #else
 #define pipe_open popen
+#define pipe_close pclose
 #endif
 
 namespace vool
@@ -91,7 +93,7 @@ public:
 	~Gnuplot()
 	{
 		fprintf(_gnuPlotPipe, "exit\n");
-		_pclose(_gnuPlotPipe);
+		pipe_close(_gnuPlotPipe);
 	}
 
 	template<typename... Ts> void operator() (const Ts&... args)
