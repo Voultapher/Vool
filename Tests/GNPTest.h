@@ -1,4 +1,10 @@
-// Unit test for GNP, as it will open a pipe to an external application, testability is limited
+/*
+* Vool - Unit tests for GNP, as it will open a pipe to an external application, testability is limited
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <vector>

@@ -1,3 +1,11 @@
+/*
+* Vool - Example usage of Vool
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
+
 #include <stdio.h>
 #include <iostream>
 #include <vector>
@@ -7,8 +15,6 @@
 #include "Tests\TestSuitTest.h"
 
 #include "Vool.h"
-
-// Here some example use cases are shown
 
 int main()
 {

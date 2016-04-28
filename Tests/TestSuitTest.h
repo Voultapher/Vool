@@ -1,4 +1,10 @@
-// Unit test for TestSuit, as it is highly generic, many cases wont be tested
+/*
+* Vool - Unit tests for TestSuit, as it is highly generic, many cases wont be tested
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <vector>

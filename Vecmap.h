@@ -1,3 +1,10 @@
+/*
+* Vool - Flat key value container, build on top of std::vector
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <vector>

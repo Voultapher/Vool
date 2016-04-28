@@ -1,4 +1,10 @@
-// Unit test for Vecmap, will call basically every member function and test for expected behaviour 
+/*
+* Vool - Unit tests for Vecmap, should basically call every member function and test for expected behaviour
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <stdio.h>

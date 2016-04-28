@@ -1,4 +1,10 @@
-// Generic perfomance test suit using GNP to visualize results
+/*
+* Vool - Generic perfomance test suit using GNP to visualize results
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 
 #pragma once
 

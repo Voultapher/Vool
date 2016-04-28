@@ -1,5 +1,10 @@
-// vool is metaprogramming library that adds functunality to c++ programms
-
+/*
+* Vool - Generic metaprogramming library focused around variadic templates
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <tuple>

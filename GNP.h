@@ -1,5 +1,10 @@
-// Gnuplot interface using popen/ _popen to pipe data to gnuplot
-
+/*
+* Vool - Gnuplot interface using popen/ _popen to pipe data to gnuplot
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include <string>
