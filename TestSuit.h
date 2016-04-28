@@ -218,18 +218,29 @@ public:
 		{
 			if (category.first.size() > 0)
 			{
-				plot.setOutput(_suitConfiguration.resultName + category.second);
 				std::vector<PlotData2D<double>> data;
+				data.reserve(category.first.size());
+
 				size_t index = 0;
 				for (const auto& results : category.first)
 				{
-					std::vector<std::pair<double, double>> points;
-					for (const auto& result : results)
-						points.push_back(std::make_pair(result.getSize(), result.getFullTime()));
-					data.emplace_back(points, index + 1, index, results.back().getTaskName());
-					++index;
+					if (results.size() > 0)
+					{
+						std::vector<std::pair<double, double>> points;
+						points.reserve(results.size());
+						for (const auto& result : results)
+							points.push_back(std::make_pair(result.getSize(), result.getFullTime()));
+						data.emplace_back(std::move(points), index + 1, index, results.back().getTaskName());
+						++index;
+					}
 				}
-				plot.plotData(data, _suitConfiguration.resultDataPath + category.second + ".dat");
+				if (data.size() > 0)
+				{ // if there are results, write them to a .dat file and tell gnuplot to create a .png
+					plot.setOutput(_suitConfiguration.resultName + category.second);
+					plot.plotData(data, _suitConfiguration.resultDataPath + category.second + ".dat");
+				}
+				else
+					std::cout << "The category: \"" << category.second << "\" had 0 results!\n";
 			}
 		}
 	}

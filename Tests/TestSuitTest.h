@@ -28,11 +28,11 @@ static void test_TestSuit()
 	if (!resultTestA.getFullTime() > 0)
 		throw std::exception(); // allocating a vector of size and measuring time should not take 0 nanoseconds
 
-	auto categoryA = createTestCategory("Test category A", testA);
+	auto categoryA = createTestCategory("Test_category_A", testA);
 	categoryA.runTestRange(0, size);
 	auto resultCategoryA = categoryA.getResults();
 
-	if (resultCategoryA.second != "Test category A")
+	if (resultCategoryA.second != "Test_category_A")
 		throw std::exception(); // category name set or get error
 	if (resultCategoryA.first.back().back().getSize() > size)
 		throw std::exception(); // category range test error
@@ -40,7 +40,7 @@ static void test_TestSuit()
 	SuitConfiguration suitConfiguration;
 	suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 	suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
-	suitConfiguration.resultName = "TST ";
+	suitConfiguration.resultName = "TST_";
 
 	auto emptyCategory = ("Empty");
 
@@ -64,10 +64,18 @@ static void test_TestSuit()
 		throw std::exception(); // runAllTests error, range fault
 
 	auto testB = createTest("Build 2D vector", [](const size_t size) { std::vector<std::vector<int>> v(size); });
-	auto categoryB = createTestCategory("Container build", testA, testB);
+	auto categoryB = createTestCategory("container_build", testA, testB);
 	auto suitB = createTestSuit(suitConfiguration, categoryA, categoryB);
 	suitB.runAllTests(0, size);
 	suitB.renderResults();
+
+	// test empty category
+	auto invisibleTest = testB;
+	invisibleTest.setInvisible();
+	auto invisibleCategory = createTestCategory("invisible Category", invisibleTest);
+	auto suitC = createTestSuit(suitConfiguration, invisibleCategory, categoryA);
+	suitC.runAllTests(0, size);
+	suitC.renderResults();
 }
 
 }

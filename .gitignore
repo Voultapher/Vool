@@ -9,6 +9,9 @@
 *.vcxproj
 *.vcxproj.filters
 
+# top level folder file exclude
+/*.png
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
