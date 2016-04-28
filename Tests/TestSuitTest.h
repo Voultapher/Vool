@@ -1,7 +1,6 @@
 // Unit test for TestSuit, as it is highly generic, many cases wont be tested
 #pragma once
 
-#include <stdio.h>
 #include <vector>
 #include <string>
 #include <stdexcept>

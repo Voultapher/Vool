@@ -1,7 +1,6 @@
 // Unit test for GNP, as it will open a pipe to an external application, testability is limited
 #pragma once
 
-#include <stdio.h>
 #include <vector>
 #include <string>
 #include <stdexcept>
