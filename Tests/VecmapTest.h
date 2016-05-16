@@ -7,7 +7,7 @@
 */
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 #include <vector>
 
 #include <Vool\Vecmap.h>

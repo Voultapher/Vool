@@ -61,7 +61,7 @@ namespace util
 	};
 
 	template<typename... Ts> using needed_arith_type_t = typename common_type_helper<
-		(sizeof...(Ts) > 0), (all_are_arithmetic<Ts...>::value), typename Ts...>::type;
+		(sizeof...(Ts) > 0), (all_are_arithmetic<Ts...>::value), Ts...>::type;
 
 	template<typename T = void> struct nope { static_assert(not std::is_same<T, void>::value, "You may nope!"); };
 
