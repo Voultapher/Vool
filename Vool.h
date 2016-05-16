@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <vector>
 #include <tuple>
 #include <utility>
 #include <exception>
@@ -24,6 +25,8 @@ namespace util
 	template < bool CONDITION > struct true_if : std::conditional< CONDITION, std::true_type, std::false_type >::type {};
 
 	template<typename T> struct is_double : std::is_same<T, double> {};
+	template<typename A> struct is_vector { static const bool value = false; };
+	template<typename T, typename A> struct is_vector<std::vector<T, A>> { static const bool value = true; };
 
 	template<bool...> struct bool_pack;
 	template<bool... b> using all_true = std::is_same<bool_pack<true, b...>, bool_pack<b..., true>>;
@@ -34,6 +37,7 @@ namespace util
 	template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
 	template<typename... Ts> struct none_are_floating_point : true_if<all_false<std::is_floating_point<Ts>::value...>::value> {};
 	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
+	template<typename... Ts> struct all_are_vector : true_if<all_true<is_vector<Ts>::value...>::value> {};
 
 	template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int : true_if<
 		(some_true<std::is_same<Ts, INT_T>::value...>::value
