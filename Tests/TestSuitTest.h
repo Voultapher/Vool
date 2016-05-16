@@ -30,7 +30,7 @@ static void test_TestSuit()
 
 	if (resultTestA.getSize() != size)
 		throw std::exception(); // createTest/ runTest/ getResult error
-	if (!resultTestA.getFullTime() > 0)
+	if (!(resultTestA.getFullTime() > 0))
 		throw std::exception(); // allocating a vector of size and measuring time should not take 0 nanoseconds
 
 	auto categoryA = createTestCategory("Test_category_A", testA);

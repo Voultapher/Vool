@@ -103,8 +103,7 @@ private:
 	// simple iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
-		int helper[] = { 0, (func(std::get<Is>(tuple)), 0)... }; // execution order matters
-		(void)helper;
+		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... }; // execution order matters
 	}
 
 	template<class F, class...Ts>
@@ -176,8 +175,7 @@ private:
 	// simple iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
-		int helper[] = { 0, (func(std::get<Is>(tuple)), 0)... }; // execution order matters
-		(void)helper;
+		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... }; // execution order matters
 	}
 
 	template<class F, class...Ts>

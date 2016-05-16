@@ -11,9 +11,9 @@
 #include <utility>
 #include <exception>
 #include <type_traits>
-#include <stdint.h>
+#include <cstdint>
 
-// MAKE SURE TO INCLUDE THIS FILE LAST AS IT CAN CAUSE PROBLEMS
+#define not !
 
 namespace vool
 {
@@ -29,7 +29,7 @@ namespace util
 	template<bool...> struct bool_pack;
 	template<bool... b> using all_true = std::is_same<bool_pack<true, b...>, bool_pack<b..., true>>;
 	template<bool... b> using all_false = std::is_same<bool_pack<false, b...>, bool_pack<b..., false>>;
-	template<bool... b> using some_true = true_if<!all_true<b...>::value && !all_false<b...>::value>;
+	template<bool... b> using some_true = true_if<not all_true<b...>::value && not all_false<b...>::value>;
 
 	template<typename... Ts> struct all_are_arithmetic : true_if<all_true<std::is_arithmetic<Ts>::value...>::value> {};
 	template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
@@ -37,45 +37,36 @@ namespace util
 	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
 	template<typename... vec_t> struct all_are_vec : true_if<all_true<is_container<std::vector, typename vec_t::value_type, vec_t>::value...>::value> {};
 
-	/*template<template<typename...> typename... container_t, typename... value_t, typename... comp_t>  struct all_are_container :
-		true_if<all_true<is_container<container_t, value_t, comp_t>::value...>::value> {};*/
-
-	// smallest adequate data type for arithmetic calculation
-	template<typename... Ts> using needed_float_type = std::conditional_t<none_are_double<Ts...>::value, float, double>;
-	template<typename A, typename B> using needed_int_type =
-		std::conditional_t < std::numeric_limits<A>::max() <= std::numeric_limits<int64_t>::max()
-		&& std::numeric_limits<B>::max() <= std::numeric_limits<int64_t>::max(), int64_t /*A*/,
-		// if possible choose int64_t or uint64_t
-		std::conditional_t < std::numeric_limits<A>::min() <= std::numeric_limits<uint64_t>::min()
-		&& std::numeric_limits<B>::min() <= std::numeric_limits<uint64_t>::min(), uint64_t /*B*/, double /*C*/ >> ;
-
-	template<typename A, typename B> using larger_type = std::conditional_t<std::numeric_limits<A>::max() >= std::numeric_limits<B>::max(),
-		std::conditional_t<std::numeric_limits<A>::min() <= std::numeric_limits<B>::min(), A, needed_int_type<A, B>>, // is A if A can hold all of B
-		std::conditional_t<std::numeric_limits<A>::min() <= std::numeric_limits<B>::min(), B, needed_int_type<A, B> >> ; // is B if B can hold all of A
-
-	template<typename...> struct largest_helper;
-	template<typename A, typename B, typename... Ts> struct largest_helper<A, B, Ts...>
+	template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int : true_if<
+		(some_true<std::is_same<Ts, INT_T>::value...>::value
+		&& some_true<std::is_same<Ts, UNIT_T>::value...>::value)
+		|| (some_true<sizeof(INT_T) <= sizeof(Ts) ...>::value
+		&& none_are_floating_point<Ts...>::value)> {};
+	
+	template<bool not_empty, bool arith, typename... Ts> struct common_type_helper
 	{
-		using type = larger_type<A, typename largest_helper<B, Ts...>::type>; // yip that is compile time recursion, :(
+		static_assert(not_empty, "Using need_arith_type you need at least one type!");
+		static_assert(arith, "Using need_arith_type, all types have to be arithmetic!");
+		using type = void;
 	};
-	template<typename A, typename B> struct largest_helper<A, B>
+
+	template<typename... Ts> struct common_type_helper<true, true, Ts...>
 	{
-		using type = larger_type<A, B>; // exactly two types
+		using type =
+			std::conditional_t<is_impossible_int<int64_t, uint64_t, Ts...>::value, double,
+			std::conditional_t<is_impossible_int<int32_t, uint32_t, Ts...>::value, int64_t,
+			std::conditional_t<is_impossible_int<int16_t, uint16_t, Ts...>::value, int32_t,
+			std::conditional_t<is_impossible_int<int8_t, uint8_t, Ts...>::value, int16_t,
+			std::common_type_t<Ts...>>>>>;
 	};
-	template<typename A> struct largest_helper<A> { using type = A; }; // exactly one type
-	template<typename... Ts> using largest_type = typename largest_helper<Ts...>::type;
+
+	template<typename... Ts> using needed_arith_type_t = typename common_type_helper<
+		(sizeof...(Ts) > 0), (all_are_arithmetic<Ts...>::value), typename Ts...>::type;
+
+	template<typename T = void> struct nope { static_assert(not std::is_same<T, void>::value, "You may nope!"); };
 
 
-	template<typename... Ts> struct needed_arith_checker
-	{
-		static_assert(sizeof...(Ts) > 0, "Using need_arith_type you need at least one type!");
-		static_assert(all_are_arithmetic<Ts...>::value, "Using need_arith_type, all types have to be arithmetic!");
-		using type = std::conditional_t<none_are_floating_point<Ts...>::value, largest_type<Ts...>, needed_float_type<Ts...>>;
-	};
-	template<typename... Ts> using needed_arith_type = typename needed_arith_checker<Ts...>::type; // only works for types with max 64-bit precision
-
-
-																									// tuple iteration
+	// tuple iteration
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
 	// simple iteration, only tuple as argument
@@ -115,7 +106,7 @@ namespace util
 
 template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tuple) with arithmetic operations
 {
-	using arith_t = util::needed_arith_type<Ts...>;
+	using arith_t = util::needed_arith_type_t<Ts...>;
 
 	explicit ArithmeticStruct(Ts... args)
 	{ // only constructible if all types are arithmetic, ensures that arithmetic operations are posible
@@ -155,7 +146,7 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 	// calc sum
 	arith_t sum()
 	{
-		arith_t sum = 0;
+		arith_t sum = {};
 		util::for_each_in_tuple(local, sum, [](const auto& element, auto& sum) { sum += element; });
 		return sum;
 	}
@@ -169,7 +160,7 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 			return (product / front()); // divide by 0 evaded
 		}
 		else
-			return 0; // first element was 0, so product will be 0
+			return{}; // first element was 0, so product will be 0
 	}
 	bool are_all_positive()
 	{
@@ -198,105 +189,4 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 	}
 };
 
-// Named tuple for C++
-// Example code from http://vitiy.info/
-// Written by Victor Laskin (victor.laskin@gmail.com)
-
-// Parts of code were taken from: https://gist.github.com/Manu343726/081512c43814d098fe4b
-namespace foonathan {
-	namespace string_id {
-		namespace detail
-		{
-			using hash_type = uint64_t;
-
-			constexpr hash_type fnv_basis = 14695981039346656037ull;
-			constexpr hash_type fnv_prime = 109951162821ull;
-
-			// FNV-1a 64 bit hash
-			constexpr hash_type sid_hash(const char *str, hash_type hash = fnv_basis) noexcept
-			{
-				return *str ? sid_hash(str + 1, (hash ^ *str) * fnv_prime) : hash;
-			}
-		}
-	}
-} // foonathan::string_id::detail
-
-
-namespace fn_detail {
-
-	/// Named parameter (could be empty!)
-	template <typename Hash, typename... Ts>
-	struct named_param {
-		using hash = Hash;                                                  ///< key
-		std::tuple<Ts...> value;                                            ///< param's data itself
-
-		named_param(Ts&&... ts) : value(std::forward<Ts>(ts)...) { };        ///< constructor
-
-		template <typename P>
-		named_param<Hash, P> operator=(P&& p) { return named_param<Hash, P>(std::forward<P>(p)); };
-
-
-
-	};
-
-	template <typename Hash>
-	using make_named_param = named_param<Hash>;
-
-
-
-
-	/// Named tuple is just tuple of named params
-	template <typename... Params>
-	struct named_tuple : public std::tuple<Params...>
-	{
-
-		template <typename... Args>
-		named_tuple(Args&&... args) : std::tuple<Args...>(std::forward<Args>(args)...) {}
-
-		static const std::size_t error = -1;
-
-		template<std::size_t I = 0, typename Hash>
-		constexpr typename std::enable_if<I == sizeof...(Params), const std::size_t>::type
-			static get_element_index()
-		{
-			return error;
-		}
-
-		template<std::size_t I = 0, typename Hash>
-		constexpr typename std::enable_if<I < sizeof...(Params), const std::size_t>::type
-			static get_element_index()
-		{
-			using elementType = typename std::tuple_element<I, std::tuple<Params...>>::type;
-			//return (typeid(typename elementType::hash) == typeid(Hash)) ? I : get_element_index<I + 1, Hash>();
-			return (std::is_same<typename elementType::hash, Hash>::value) ? I : get_element_index<I + 1, Hash>();
-		}
-
-		template<typename Hash>
-		auto& get()
-		{
-			constexpr std::size_t index = get_element_index<0, Hash>();
-			static_assert((index != error), "Wrong named tuple key");
-			auto& param = (std::get< index >(static_cast<std::tuple<Params...>&>(*this)));
-			return std::get<0>(param.value);
-		}
-
-		template<typename NP>
-		auto& operator[](NP&& param)
-		{
-			return get<typename NP::hash>();
-		}
-
-	};
-
-
 }
-
-template <typename... Args>
-auto make_named_tuple(Args&&... args)
-{
-	return fn_detail::named_tuple<Args...>(std::forward<Args>(args)...);
-}
-
-}
-
-#define param(x) vool::fn_detail::make_named_param< std::integral_constant<vool::foonathan::string_id::detail::hash_type, vool::foonathan::string_id::detail::sid_hash(x)> >{}
