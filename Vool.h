@@ -24,7 +24,6 @@ namespace util
 	template < bool CONDITION > struct true_if : std::conditional< CONDITION, std::true_type, std::false_type >::type {};
 
 	template<typename T> struct is_double : std::is_same<T, double> {};
-	template<template<typename...> typename container_t, typename value_t, typename comp_t> struct is_container : std::is_same<typename container_t<typename value_t>, comp_t> {};
 
 	template<bool...> struct bool_pack;
 	template<bool... b> using all_true = std::is_same<bool_pack<true, b...>, bool_pack<b..., true>>;
@@ -35,7 +34,6 @@ namespace util
 	template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
 	template<typename... Ts> struct none_are_floating_point : true_if<all_false<std::is_floating_point<Ts>::value...>::value> {};
 	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
-	template<typename... vec_t> struct all_are_vec : true_if<all_true<is_container<std::vector, typename vec_t::value_type, vec_t>::value...>::value> {};
 
 	template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int : true_if<
 		(some_true<std::is_same<Ts, INT_T>::value...>::value
