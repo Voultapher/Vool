@@ -44,10 +44,11 @@ int main()
 	std::common_type_t<int16_t, uint32_t> impossibleRangeCT = -2;
 	std::cout << "\nFinding valid arithmetic type, with example types:\n\n\t<int16_t, uint32_t> and -2 as value\n" <<
 		"\nVariable content using common_type: " << impossibleRangeCT <<
-		"\nVariable content using vool::util::needed_arith_type: " << impossibleRange;
+		"\nVariable content using vool::util::needed_arith_type: " << impossibleRange << "\n";
 
 	//vool::util::needed_arith_type_t<int, std::vector<int>> incompatible; // compiler error
 
+	std::cout << "\nDone!\n" << std::flush;
 	char tmp = std::cin.get(); // pause for user input
 
 	return 0;

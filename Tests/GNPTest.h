@@ -11,7 +11,7 @@
 #include <string>
 #include <stdexcept>
 
-#include <Vool\GNP.h>
+#include <GNP.h>
 
 namespace vool
 {

@@ -11,7 +11,7 @@
 #include <string>
 #include <stdexcept>
 
-#include <Vool\TestSuit.h>
+#include <TestSuit.h>
 
 namespace vool
 {

@@ -16,10 +16,9 @@ namespace vool
 {
 
 //Partial spezialization
-template<typename K, typename V, bool need_reference, typename ENABLE = void> struct Bucket { };
+template<typename K, typename V, bool need_reference> struct Bucket { };
 
-template<typename K, typename V, bool need_reference> struct Bucket
-	<K, V, need_reference, typename std::enable_if<need_reference>::type>
+template<typename K, typename V> struct Bucket<K, V, true>
 {
 private:
 	K key;
@@ -38,26 +37,25 @@ public:
 	const K& getKey() const { return key; }
 
 	bool operator== (const K& comp) const { return key == comp; }
-	bool operator== (const Bucket<K, V, need_reference>& comp) const { return key == comp.key; }
+	bool operator== (const Bucket<K, V, true>& comp) const { return key == comp.key; }
 
 	bool operator!= (const K& comp) const { return key != comp; }
-	bool operator!= (const Bucket<K, V, need_reference>& comp) const { return key != comp.key; }
+	bool operator!= (const Bucket<K, V, true>& comp) const { return key != comp.key; }
 
 	bool operator< (const K& comp) const { return key < comp; }
-	bool operator< (const Bucket<K, V, need_reference>& comp) const { return key < comp.key; }
+	bool operator< (const Bucket<K, V, true>& comp) const { return key < comp.key; }
 
 	bool operator<= (const K& comp) const { return key <= comp; }
-	bool operator<= (const Bucket<K, V, need_reference>& comp) const { return key <= comp.key; }
+	bool operator<= (const Bucket<K, V, true>& comp) const { return key <= comp.key; }
 
 	bool operator> (const K& comp) const { return key > comp; }
-	bool operator> (const Bucket<K, V, need_reference>& comp) const { return key > comp.key; }
+	bool operator> (const Bucket<K, V, true>& comp) const { return key > comp.key; }
 
 	bool operator>= (const K& comp) const { return key >= comp; }
-	bool operator>= (const Bucket<K, V, need_reference>& comp) const { return key >= comp.key; }
+	bool operator>= (const Bucket<K, V, true>& comp) const { return key >= comp.key; }
 };
 
-template<typename K, typename V, bool need_reference> struct Bucket
-	<K, V, need_reference, typename std::enable_if<!need_reference>::type>
+template<typename K, typename V> struct Bucket<K, V, false>
 {
 public:
 	K key;
@@ -78,22 +76,22 @@ public:
 	const K& getKey() const { return key; }
 
 	bool operator== (const K& comp) const { return key == comp; }
-	bool operator== (const Bucket<K, V, need_reference>& comp) const { return key == comp.key; }
+	bool operator== (const Bucket<K, V, false>& comp) const { return key == comp.key; }
 
 	bool operator!= (const K& comp) const { return key != comp; }
-	bool operator!= (const Bucket<K, V, need_reference>& comp) const { return key != comp.key; }
+	bool operator!= (const Bucket<K, V, false>& comp) const { return key != comp.key; }
 
 	bool operator< (const K& comp) const { return key < comp; }
-	bool operator< (const Bucket<K, V, need_reference>& comp) const { return key < comp.key; }
+	bool operator< (const Bucket<K, V, false>& comp) const { return key < comp.key; }
 
 	bool operator<= (const K& comp) const { return key <= comp; }
-	bool operator<= (const Bucket<K, V, need_reference>& comp) const { return key <= comp.key; }
+	bool operator<= (const Bucket<K, V, false>& comp) const { return key <= comp.key; }
 
 	bool operator> (const K& comp) const { return key > comp; }
-	bool operator> (const Bucket<K, V, need_reference>& comp) const { return key > comp.key; }
+	bool operator> (const Bucket<K, V, false>& comp) const { return key > comp.key; }
 
 	bool operator>= (const K& comp) const { return key >= comp; }
-	bool operator>= (const Bucket<K, V, need_reference>& comp) const { return key >= comp.key; }
+	bool operator>= (const Bucket<K, V, false>& comp) const { return key >= comp.key; }
 };
 
 template<typename K, typename V> struct vec_map
@@ -103,7 +101,7 @@ private:
 	bool _is_sorted; // tmp
 	std::vector<Bucket<K, V, need_reference>> _buckets;
 
-	void copy_internal(const vec_map<K, V>& other)
+	void copy_internal(const vec_map<K, V> const& other)
 	{
 		reserve(other.capacity());
 		if (other.is_referenced())
@@ -169,13 +167,13 @@ public:
 	}
 
 	// insert
-	void insert(const K& key, const V& value)
+	void insert(const K const& key, const V const& value)
 	{ // single element insert
 		_buckets.emplace_back(key, value);
 		_is_sorted = false;
 	}
 
-	void insert(const decltype(_buckets.back())& bucket)
+	void insert(const decltype(_buckets.back()) const& bucket)
 	{ // bucket insert
 		_buckets.emplace_back(bucket.getKey(), bucket.getValue());
 		_is_sorted = false;
@@ -223,13 +221,13 @@ public:
 	}
 
 	// get value
-	V& operator[] (const K key)
+	V& operator[] (const K const& key)
 	{
 		if (!_is_sorted) sort();
 		return std::lower_bound(_buckets.begin(), _buckets.end(), key)->getValue();
 	}
 
-	V& at(const K& key)
+	V& at(const K const& key)
 	{
 		if (!_is_sorted) sort();
 		auto res = std::lower_bound(_buckets.begin(), _buckets.end(), key);
@@ -240,7 +238,7 @@ public:
 	}
 
 	// erase elements
-	void erase(const K& key)
+	void erase(const K const& key)
 	{ // key erase: container stays sorted
 		if (!_is_sorted) sort();
 		auto first = std::lower_bound(_buckets.begin(), _buckets.end(), key);

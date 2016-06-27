@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <vector>
 
-#include <Vool\Vecmap.h>
+#include <Vecmap.h>
 
 namespace vool
 {

@@ -1,2 +1,1 @@
 
-maybe, make arithmetic struct with named tuple
