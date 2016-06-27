@@ -15,7 +15,7 @@
 
 namespace vool
 {
-static void test_TestSuit()
+static const char* test_TestSuit()
 {
 	Result resultA(2, 100.0, 60, "Simple Result");
 	if (resultA.getSize() != 2)
@@ -34,7 +34,7 @@ static void test_TestSuit()
 		throw std::exception(); // allocating a vector of size and measuring time should not take 0 nanoseconds
 
 	auto categoryA = createTestCategory("Test_category_A", testA);
-	categoryA.runTestRange(0, size);
+	categoryA.runTestRange(0, size, 50);
 	auto resultCategoryA = categoryA.getResults();
 
 	if (resultCategoryA.second != "Test_category_A")
@@ -81,6 +81,8 @@ static void test_TestSuit()
 	auto suitC = createTestSuit(suitConfiguration, invisibleCategory, categoryA);
 	suitC.runAllTests(0, size);
 	suitC.renderResults();
+
+	return "Testsuit test was successfull!\n";
 }
 
 }

@@ -20,7 +20,7 @@ struct BigData
 	int sampleArray[40];
 };
 
-static void test_Vecmap()
+static const char* test_Vecmap()
 {
 	// configuration
 	using K = size_t;
@@ -105,6 +105,8 @@ static void test_Vecmap()
 	vecMapCopy.clear(); // calls internal vector clear()
 	if (vecMapCopy.size() != 0)
 		throw std::exception(); // clear error
+
+	return "Vecmap test was successfull!\n";
 }
 
 }

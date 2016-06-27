@@ -19,9 +19,11 @@
 int main()
 {
 
-	vool::test_Vecmap();
-	vool::test_GNP();
-	vool::test_TestSuit();
+	std::string testResults = vool::test_Vecmap();
+	testResults += vool::test_GNP();
+	testResults += vool::test_TestSuit();
+
+	std::cout << "\n" << testResults << "\n";
 
 	using Ingredient = vool::ArithmeticStruct<float, int, double, char>;
 	auto cookie1 = Ingredient(3.4f, 42, 55.66, 'd');

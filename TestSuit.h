@@ -115,12 +115,11 @@ public:
 	explicit TestCategory(const std::string& categoryName, Tests&... tests)
 		: _categoryName(categoryName), _tests(std::make_tuple(tests...)) { }
 
-	void runTestRange(const size_t minSize, const size_t maxSize)
+	void runTestRange(const size_t minSize, const size_t maxSize, const size_t stepCount)
 	{ // all test will be executed in construction order
 		std::vector<std::vector<Result>> local(sizeof...(Tests)); // resize to fit amount of tests
 
-																	// for every test
-		for (size_t size = minSize; size <= maxSize; size = size > 1 ? size * 1.5 : size + 1)
+		auto runTest = [this, &local](const size_t size)
 		{
 			size_t i = 0;
 			for_each_in_tuple(_tests, [&i, size, &local](auto& element)
@@ -132,7 +131,20 @@ public:
 					++i;
 				}
 			});
-		}
+		};
+
+		// this code should only be called if:
+		// maxsize is larger than 0 and larger or equal to minsize
+		if (minSize <= 1)
+			runTest(1);
+
+		size_t size = 2;
+		for (; size < maxSize && size >= minSize; size += 1 + maxSize / stepCount)
+			runTest(size);
+
+		if (maxSize > 1)
+			runTest(maxSize);
+
 		_results = std::move(local);
 	}
 
@@ -148,16 +160,20 @@ struct SuitConfiguration
 {
 	uint32_t xResolution;
 	uint32_t yResolution;
+	size_t stepCount;
 	std::string gnuplotPath;
 	std::string xAxisName;
 	std::string yAxisName;
 	std::string resultDataPath;
 	std::string resultName;
 
-	explicit SuitConfiguration(uint32_t xRes = 1200, uint32_t yRes = 500, const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
+	explicit SuitConfiguration(uint32_t xRes = 1200, uint32_t yRes = 500, size_t stepNumber = 20,
+		const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
 		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
 		const std::string& resultPath = "", const std::string& resName = "Result") // empty resultPath as a folder would have to be constructed
-		: xResolution(xRes), yResolution(yRes), gnuplotPath(gpPath), xAxisName(xName), yAxisName(yName),
+		: xResolution(xRes), yResolution(yRes), stepCount(stepNumber),
+		gnuplotPath(gpPath),
+		xAxisName(xName), yAxisName(yName),
 		resultDataPath(resultPath), resultName(resName) { }
 };
 
@@ -195,9 +211,10 @@ public:
 			auto local = std::move(_results);
 
 			// for every category
-			for_each_in_tuple(_categorys, [minSize, maxSize, &local](auto& element)
+			for_each_in_tuple(_categorys, [minSize, maxSize, &local,
+				stepCount = _suitConfiguration.stepCount](auto& element)
 			{
-				element.runTestRange(minSize, maxSize);
+				element.runTestRange(minSize, maxSize, stepCount);
 				local.push_back(element.getResults());
 			});
 			_results = std::move(local);

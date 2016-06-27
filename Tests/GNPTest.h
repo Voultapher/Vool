@@ -16,7 +16,7 @@
 namespace vool
 {
 
-static void test_GNP()
+static const char* test_GNP()
 {
 	const std::string gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 
@@ -50,6 +50,8 @@ static void test_GNP()
 
 	std::vector<PlotData2D<double>> plotDataEmpty;
 	gnp.plotData(plotDataEmpty, "empty.dat"); // test empty, should create new file
+
+	return "GNP test was successfull!\n";
 }
 
 }
