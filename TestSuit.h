@@ -167,7 +167,7 @@ struct SuitConfiguration
 	std::string resultDataPath;
 	std::string resultName;
 
-	explicit SuitConfiguration(uint32_t xRes = 1200, uint32_t yRes = 500, size_t stepNumber = 20,
+	explicit SuitConfiguration(uint32_t xRes = 1000, uint32_t yRes = 500, size_t stepNumber = 20,
 		const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
 		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
 		const std::string& resultPath = "", const std::string& resName = "Result") // empty resultPath as a folder would have to be constructed
