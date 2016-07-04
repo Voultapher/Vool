@@ -15,7 +15,7 @@
 
 namespace vool
 {
-static const char* test_TestSuit()
+const char* test_TestSuit()
 {
 	Result resultA(2, 100.0, 60, "Simple Result");
 	if (resultA.getSize() != 2)
@@ -82,7 +82,7 @@ static const char* test_TestSuit()
 	suitC.runAllTests(0, size);
 	suitC.renderResults();
 
-	return "Testsuit test was successfull!\n";
+	return "Testsuit test was successful!\n";
 }
 
 }
