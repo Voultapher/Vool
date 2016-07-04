@@ -13,6 +13,7 @@
 #include "Tests\VecmapTest.h"
 #include "Tests\GNPTest.h"
 #include "Tests\TestSuitTest.h"
+#include "Tests\TaskQueueTest.h"
 
 #include "Vool.h"
 
@@ -20,10 +21,13 @@ int main()
 {
 
 	std::string testResults = vool::test_Vecmap();
-	testResults += vool::test_GNP();
-	testResults += vool::test_TestSuit();
-
-	std::cout << "\n" << testResults << "\n";
+	std::cout << "\n" << testResults;
+	testResults = vool::test_GNP();
+	std::cout << testResults;
+	testResults = vool::test_TestSuit();
+	std::cout << testResults;
+	testResults = vool::test_TaskQueue();
+	std::cout << testResults << "\n";
 
 	using Ingredient = vool::ArithmeticStruct<float, int, double, char>;
 	auto cookie1 = Ingredient(3.4f, 42, 55.66, 'd');
