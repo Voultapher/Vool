@@ -1,0 +1,8 @@
+TestSuit:
+have a function that tests a single category
+
+GNP:
+Add support for using gnuplot terminal as window rather than only saving them to png
+
+TestSuit:
+Expose way of choosing between saving, window, preview and save

@@ -273,27 +273,4 @@ template<typename... TestCategorys> static auto createTestSuit(const SuitConfigu
 	return std::move(TestSuit<TestCategorys...>(suitConfiguration, categorys...));
 }
 
-template<typename K, typename Func> static auto createUniqueKeys(const size_t size, K startKey, Func keyFunc)
-{
-	std::vector<K> keyVals;
-
-	std::mt19937_64 generator(1337); // fixed seed for reproducibility
-	using rand_t = std::conditional_t < std::is_arithmetic<K>::value && !std::is_floating_point<K>::value, K, int64_t>;
-	std::uniform_int_distribution<int64_t> distribution(std::numeric_limits<rand_t>::min(), std::numeric_limits<rand_t>::max());
-	std::vector<rand_t> usedRandValues;
-	rand_t randVal;
-
-	for (size_t i = 0; i < size; ++i)
-	{
-		keyVals.push_back(startKey);
-		do
-		{ // ensure unique keys
-			randVal = distribution(generator);
-		} while (std::find(usedRandValues.begin(), usedRandValues.end(), randVal) != usedRandValues.end());
-		keyFunc(startKey, randVal);
-	}
-
-	return std::move(keyVals);
-}
-
 }
