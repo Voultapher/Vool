@@ -45,8 +45,8 @@ namespace util
 			if (!std::is_same<std::string, decltype(args)>::value)
 				command += convert<decltype(args)>(args);
 		};
-		int helper[] = { 0, (wFunc(args), 0)... }; // order is important
-		(void)helper;
+		static_cast<void>
+			(std::initializer_list<int> { 0, (wFunc(args), 0)... }); // order is important
 		return std::move(command);
 	}
 

@@ -114,7 +114,8 @@ private:
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
 	{
 		// execution order matters
-		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... };
+		static_cast<void>
+			(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
 	}
 
 	template<class F, class...Ts>
@@ -214,7 +215,8 @@ private:
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
 	{
 		// execution order matters
-		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... };
+		static_cast<void>
+			(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
 	}
 
 	template<class F, class...Ts>
