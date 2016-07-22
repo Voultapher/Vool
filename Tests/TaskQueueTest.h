@@ -42,19 +42,23 @@ const char* test_TaskQueue()
 		{
 			task_queue tq;
 
+			// add 2 tasks which can execute in parallel
 			auto conditionA = tq.add_task([&vecA, simpleFunc]() { simpleFunc(vecA); });
 			auto conditionB = tq.add_task([&vecB, simpleFunc]() { simpleFunc(vecB); });
+
+			// add a task that should only start as soon as the first 2 are finished
 			auto conditionCombined = tq.add_task(
 				[&vecA, &vecB, &res, combinedFunc]() { combinedFunc(vecA, vecB, res); },
-				{ conditionA, conditionB }
+				{ conditionA, conditionB } // requesites returned from adding task A and B
 			);
 		}
-		if (res[testSize - 1] != ((testSize - 1) * 2))
+		if (res[testSize - 1] != ((testSize - 1) * 2)) // combinedFunc should fill res
 			throw std::exception(); // taske_queue did not finish or missed a task
 	}
 
 	// #2 optimal scaling
 	{
+		// optimal task should not be io bound
 		auto optimalTask([testSize]()
 		{ // non io bound test
 			using val_t = volatile int;
@@ -77,6 +81,7 @@ const char* test_TaskQueue()
 		tq.wait(async_t::public_key_t(evil));
 
 		// this should not block
+		// nonexisting prerequisites usually indicate an allready finished task
 	}
 
 	// #4 finished prereq
@@ -134,12 +139,15 @@ const char* test_TaskQueue()
 			fail = v.size() != testSize;
 		};
 
+		// add simple vector resize task
 		auto condA = tq.add_task(taskA);
 		tq.wait(condA);
 
+		// add new task with condA as prerequisite
 		tq.add_task(taskB, { condA });
 		tq.wait_all();
 
+		// wait_all should wait for one task and fail if taskA was improperly executed
 		if (fail)
 			throw std::exception(); // taskB was not properly executed
 	}
@@ -159,11 +167,15 @@ const char* test_TaskQueue()
 		auto innerTask = [&tqB, &condition, &resizeTask]()
 		{ condition = tqB.add_task(std::move(resizeTask)); };
 
+		// a task is added to task_queue A, which itself adds task to task_queue B
 		{
 			task_queue tqA;
 			auto condA = tqA.add_task(innerTask);
 			tqA.wait(condA);
 		}
+
+		// now tqA should have finished innerTask and be empty
+		// and tqB should have launched resizeTask and should wait for sync
 
 		bool equalBefore = (v.size() == size);
 		sync.set_value(); // signal resizeTask to continue
@@ -297,15 +309,17 @@ const char* test_TaskQueue()
 			throw std::exception(); // something in complex test went wrong
 	});
 
+	{
 #ifdef NDEBUG
-	size_t heavyRepeatCount = 500;
+		size_t heavyRepeatCount = 500;
 #else
-	size_t heavyRepeatCount = 5;
+		size_t heavyRepeatCount = 5;
 #endif
 
-	// repeat the complex test many times to catch rare multithreaded related bugs
-	for (size_t i = 0; i < heavyRepeatCount; ++i)
-		heavyTest(static_cast<uint64_t>(i) * 1445);
+		// repeat the complex test many times to catch rare multithreaded related bugs
+		for (size_t i = 0; i < heavyRepeatCount; ++i)
+			heavyTest(static_cast<uint64_t>(i) * 1445);
+	}
 
 	return "TaskQueue test was successful!\n";
 }

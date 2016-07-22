@@ -156,7 +156,7 @@ private:
 						}
 						else
 						{ // should never happen without external manipulation
-							std::cout << "A task from _tasks was removed although it still was a prerequesite!\n";
+							std::cout << "A task from _tasks was removed although it still was a prerequisite!\n";
 							throw std::logic_error("Invalid key!");
 						}
 					}
