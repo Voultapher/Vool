@@ -30,8 +30,10 @@ const char* test_TestSuit()
 
 	if (resultTestA.getSize() != size)
 		throw std::exception(); // createTest/ runTest/ getResult error
+
+	// allocating a vector of size and measuring time should not take 0 nanoseconds
 	if (!(resultTestA.getFullTime() > 0))
-		throw std::exception(); // allocating a vector of size and measuring time should not take 0 nanoseconds
+		throw std::exception();
 
 	auto categoryA = createTestCategory("Test_category_A", testA);
 	categoryA.runTestRange(0, size, 50);
@@ -68,7 +70,8 @@ const char* test_TestSuit()
 	if (resultSuitA.front().first.back().size() != 1) // there should only be one result
 		throw std::exception(); // runAllTests error, range fault
 
-	auto testB = createTest("Build 2D vector", [](const size_t size) { std::vector<std::vector<int>> v(size); });
+	auto testB = createTest("Build 2D vector", [](const size_t size)
+	{ std::vector<std::vector<int>> v(size); });
 	auto categoryB = createTestCategory("container_build", testA, testB);
 	auto suitB = createTestSuit(suitConfiguration, categoryA, categoryB);
 	suitB.runAllTests(0, size);

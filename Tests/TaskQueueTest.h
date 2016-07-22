@@ -1,3 +1,10 @@
+/*
+* Vool - Unit tests for task_queue
+*
+* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+*
+* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+*/
 #pragma once
 
 #include "TaskQueue.h"
@@ -90,7 +97,8 @@ const char* test_TaskQueue()
 
 		int cat = 0;
 
-		auto taskWait = [&cat]() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); cat = 7; };
+		auto taskWait = [&cat]()
+		{ std::this_thread::sleep_for(std::chrono::milliseconds(100)); cat = 7; };
 		auto taskPrint = [&cat]() { int print = cat; };
 
 		auto waitCond = tq.add_task(taskWait);
@@ -260,11 +268,16 @@ const char* test_TaskQueue()
 
 			std::vector<async_t::public_key_t> conditionsA;
 			for (const auto& vec : vecs)
-				conditionsA.push_back(tq.add_task([&vec, sum, it = sums_it++]() { *it = sum(vec); }));
+				conditionsA.push_back(tq.add_task(
+					[&vec, sum, it = sums_it++]() { *it = sum(vec); }));
 
 			// B
-			auto conditionB = tq.add_task([&sums, &groov, groovle, size = vecs.size()]()
-			{ groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size)); }, conditionsA);
+			auto conditionB = tq.add_task(
+				[&sums, &groov, groovle, size = vecs.size()]()
+				{ 
+					groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
+				},
+				conditionsA);
 
 			// C
 			std::vector<async_t::public_key_t> conditionsC;

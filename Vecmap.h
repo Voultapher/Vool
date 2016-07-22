@@ -179,13 +179,19 @@ public:
 		_is_sorted = false;
 	}
 
-	void insert(const typename std::vector<std::pair<K, V>>::iterator first, const typename std::vector<std::pair<K, V>>::iterator last)
+	void insert(
+		const typename std::vector<std::pair<K, V>>::iterator first,
+		const typename std::vector<std::pair<K, V>>::iterator last
+	)
 	{
 		for (auto keyIt = first; keyIt != last; ++keyIt)
 			insert(keyIt->first, keyIt->second);
 	}
 
-	void insert(const decltype(_buckets.begin()) first, const decltype(_buckets.end()) last)
+	void insert(
+		const decltype(_buckets.begin()) first,
+		const decltype(_buckets.end()) last
+	)
 	{ // bucket range insert
 		size_t new_size = size() + std::distance(first, last);
 		reserve(new_size);
@@ -249,8 +255,14 @@ public:
 		}
 	}
 
-	void erase(const typename std::vector<K>::iterator first, const typename std::vector<K>::iterator last)
-	{ // key range erase: container stays sorted. Will throw if either heighest or lowest key are not valid
+	void erase(
+		const typename std::vector<K>::iterator first,
+		const typename std::vector<K>::iterator last
+	)
+	{
+		// key range erase: container stays sorted.
+		// Should throw if either heighest or lowest key are not valid
+
 		if (first != last)
 		{
 			std::vector<K> local;
@@ -267,7 +279,10 @@ public:
 		}
 	}
 
-	void erase(const decltype(_buckets.begin()) first, const decltype(_buckets.end()) last)
+	void erase(
+		const decltype(_buckets.begin()) first,
+		const decltype(_buckets.end()) last
+	)
 	{ // bucket range erase: container stays sorted, fastest erase
 		if (first != _buckets.end())
 		{

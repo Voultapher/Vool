@@ -44,7 +44,9 @@ const char* test_Vecmap()
 	vool::vec_map<K, V> noReserve; // default construction
 	for (size_t key = containerSize; key < containerSize * 1.5 + 1; ++key)
 		noReserve.insert(key, value); // key value insertion
-	vecMap.insert(noReserve.begin(), noReserve.end()); // begin() and end() test + bucket range insert
+
+	// begin() and end() test + bucket range insert
+	vecMap.insert(noReserve.begin(), noReserve.end());
 
 	if (vecMap.size() != containerSize * 1.5 + 1)
 		throw std::exception(); // bucket range insert error

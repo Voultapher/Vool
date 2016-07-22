@@ -61,7 +61,11 @@ private:
 	std::string _name;
 
 public:
-	PlotData2D(const std::vector<std::pair<T, T>> d, const uint32_t lS, const uint32_t id, const std::string& name)
+	PlotData2D(
+		const std::vector<std::pair<T, T>> d,
+		const uint32_t lS, const uint32_t id,
+		const std::string& name
+	)
 		:_data(d), _lineStyle(lS), _index(id), _name(name) { }
 
 	const auto& getData() const { return _data; }
@@ -117,7 +121,11 @@ public:
 		fflush(_gnuPlotPipe);
 	}
 
-	void setAxis(const std::string& xLabel = "x-axis", const std::string& yLabel = "y-axis", const std::string& zLabel = "z-axis")
+	void setAxis(
+		const std::string& xLabel = "x-axis",
+		const std::string& yLabel = "y-axis",
+		const std::string& zLabel = "z-axis"
+	)
 	{
 		operator()("set xlabel \"" + xLabel + "\"");
 		operator()("set ylabel \"" + yLabel + "\"");
@@ -126,12 +134,16 @@ public:
 
 	void setSaveMode(const uint32_t horizontalRes, const uint32_t verticalRes)
 	{
-		operator()("set terminal pngcairo enhanced font 'Verdana,10' background rgb '#FCFCFC' size ", horizontalRes, ", ", verticalRes);
+		operator()(
+			"set terminal pngcairo enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
+			horizontalRes, ", ", verticalRes);
 	}
 
 	void setWindowMode(const uint32_t horizontalRes, const uint32_t verticalRes)
 	{
-		operator()("set terminal wxt enhanced font 'Verdana,10' background rgb '#FCFCFC' size ", horizontalRes, ", ", verticalRes);
+		operator()(
+			"set terminal wxt enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
+			horizontalRes, ", ", verticalRes);
 	}
 
 	void setOutput(const std::string& fileName)
@@ -139,10 +151,22 @@ public:
 		operator()("set output \"" + fileName + ".png\"");
 	}
 
-	void addLineStyle(const uint32_t index, const std::string& color, const uint32_t lineWidth = 2, const uint32_t lineType = 1,
-		const uint32_t pointType = 2, const float pointSize = 1.5f)
+	void addLineStyle(
+		const uint32_t index,
+		const std::string& color,
+		const uint32_t lineWidth = 2,
+		const uint32_t lineType = 1,
+		const uint32_t pointType = 2,
+		const float pointSize = 1.5f
+	)
 	{
-		operator()("set style line ", index, " lc rgb \"" + color + "\" lw ", lineWidth, +" dashtype ", lineType, " pt ", pointType, " ps ", pointSize);
+		operator()(
+			"set style line ", index,
+			" lc rgb \"" + color +
+			"\" lw ", lineWidth,
+			" dashtype ", lineType,
+			" pt ", pointType,
+			" ps ", pointSize);
 	}
 
 	void addGrid()
@@ -153,7 +177,10 @@ public:
 		operator()("set grid back ls 12");
 	}
 
-	template<typename T> void plotData(const std::vector<PlotData2D<T>>& plots, const std::string& filePath = "data.dat")
+	template<typename T> void plotData(
+		const std::vector<PlotData2D<T>>& plots,
+		const std::string& filePath = "data.dat"
+	)
 	{
 		if (plots.size() > 0)
 		{
@@ -170,7 +197,8 @@ public:
 				outputFile << util::convert_to_string_v("#(index ", plot.getIndex(), ")\n");
 				outputFile << "# X Y\n";
 				for (const auto pointPair : plot.getData())
-					outputFile << util::convert_to_string_v("  ", pointPair.first, " ", pointPair.second, "\n");
+					outputFile << util::convert_to_string_v
+					("  ", pointPair.first, " ", pointPair.second, "\n");
 
 				outputFile << "\n\n";
 			}
@@ -179,9 +207,15 @@ public:
 			// create command and push it to gnuplot
 			std::string command = "plot '" + filePath + "' ";
 			for (const auto& plot : plots)
-				command += util::convert_to_string_v("index ", plot.getIndex(), " t '", plot.getName(), "' with linespoints ls ", plot.getLineStyle(), ", \'' ");
+				command += util::convert_to_string_v
+				(
+					"index ", plot.getIndex(),
+					" t '", plot.getName(),
+					"' with linespoints ls ", plot.getLineStyle(),
+					", \'' "
+				);
 			command.erase(command.size() - 5, 5); // remove the last ", \'' "
-													//command += " dashed 1";
+
 			operator()(command);
 		}
 	}

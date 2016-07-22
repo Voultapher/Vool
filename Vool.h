@@ -65,83 +65,114 @@ namespace util
 	template<typename... Ts> using needed_arith_type_t = typename common_type_helper<
 		(sizeof...(Ts) > 0), (all_are_arithmetic<Ts...>::value), Ts...>::type;
 
-	template<typename T = void> struct nope { static_assert(not std::is_same<T, void>::value, "You may nope!"); };
+	template<typename T = void> struct nope
+	{
+		static_assert(not std::is_same<T, void>::value, "You may nope!");
+	};
 
 
 	// tuple iteration
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
-	// simple iteration, only tuple as argument
+	//  iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
+	{
 		wrapper((func(std::get<Is>(tuple)), 0)...);
 	}
 
 	template<class F, class...Ts>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func) {
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
+	{
 		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
 
-	//simple iteration, with tuple + scalar
+	// iteration, with tuple + scalar
 	template<typename... Ts, typename S, typename F, std::size_t... Is>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, S& scalar, F func, std::index_sequence<Is...>) {
+	void for_each_in_tuple(
+		std::tuple<Ts...>& tuple,
+		S& scalar,
+		F func,
+		std::index_sequence<Is...>
+	)
+	{
 		wrapper((func(std::get<Is>(tuple), scalar), 0)...);
 	}
 
 	template<typename... Ts, typename S, typename F>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, S& scalar, F func) {
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, S& scalar, F func)
+	{
 		for_each_in_tuple(tuple, scalar, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
 
-	//simple iteration, with 3 tuples
+	// iteration, with 3 tuples
 	template<typename... Ret, typename... A, typename... B, class F, std::size_t... Is>
-	void tuple_operator(std::tuple<Ret...>& ret, const std::tuple<A...>& a, const std::tuple<B...>& b, F func, std::index_sequence<Is...>) {
+	void tuple_operator(
+		std::tuple<Ret...>& ret,
+		const std::tuple<A...>& a,
+		const std::tuple<B...>& b,
+		F func,
+		std::index_sequence<Is...>)
+	{
 		wrapper((func(std::get<Is>(ret), std::get<Is>(a), std::get<Is>(b)), 0)...);
 	}
 
 	template<typename... Ret, typename... A, typename... B, class F>
-	void tuple_operator(std::tuple<Ret...>& ret, const std::tuple<A...>& a, const std::tuple<B...>& b, F func) {
+	void tuple_operator(
+		std::tuple<Ret...>& ret,
+		const std::tuple<A...>& a,
+		const std::tuple<B...>& b,
+		F func)
+	{
 		tuple_operator(ret, a, b, func, std::make_index_sequence<sizeof...(Ret)>());
 	}
 }
 
-
-template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tuple) with arithmetic operations
+// a hetoregenous container(tuple) with arithmetic operations
+template<typename... Ts> struct ArithmeticStruct
 {
 	using arith_t = util::needed_arith_type_t<Ts...>;
 
 	explicit ArithmeticStruct(Ts... args)
-	{ // only constructible if all types are arithmetic, ensures that arithmetic operations are posible
-		static_assert(util::all_are_arithmetic<Ts...>::value, "ArithmeticStruct can only be constructed if all types are arithmetic!");
+	{
+		// only constructible if all types are arithmetic
+		// ensures that arithmetic operations are posible
+		static_assert(util::all_are_arithmetic<Ts...>::value,
+			"ArithmeticStruct can only be constructed if all types are arithmetic!");
 		local = std::make_tuple(std::move(args)...);
 	}
 	std::tuple<Ts...> local; // local storage of data
 
-								// custom operators
+	// custom operators
 	ArithmeticStruct operator+ (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local, [](auto& ret, const auto& a, const auto& b) { ret = a + b; });
+		util::tuple_operator(ret.local, local, comp.local,
+			[](auto& ret, const auto& a, const auto& b) { ret = a + b; });
 		return ret;
 	}
 	ArithmeticStruct operator- (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local, [](auto& ret, const auto& a, const auto& b) { ret = a - b; });
+		util::tuple_operator(ret.local, local, comp.local,
+			[](auto& ret, const auto& a, const auto& b) { ret = a - b; });
 		return ret;
 	}
 	ArithmeticStruct operator* (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local, [](auto& ret, const auto& a, const auto& b) { ret = a * b; });
+		util::tuple_operator(ret.local, local, comp.local,
+			[](auto& ret, const auto& a, const auto& b) { ret = a * b; });
 		return ret;
 	}
 
 	template<typename T> ArithmeticStruct operator* (T t) // scaling
 	{
-		static_assert(std::is_arithmetic<T>::value, "A ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
+		static_assert(std::is_arithmetic<T>::value,
+			"A ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
 		ArithmeticStruct ret(*this);
-		util::for_each_in_tuple(ret.local, t, [](auto& ret, const auto scalar) { ret *= scalar; });
+		util::for_each_in_tuple(ret.local, t,
+			[](auto& ret, const auto scalar) { ret *= scalar; });
 		return ret;
 	}
 
@@ -149,7 +180,8 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 	arith_t sum()
 	{
 		arith_t sum = {};
-		util::for_each_in_tuple(local, sum, [](const auto& element, auto& sum) { sum += element; });
+		util::for_each_in_tuple(local, sum,
+			[](const auto& element, auto& sum) { sum += element; });
 		return sum;
 	}
 	// calc product
@@ -158,23 +190,34 @@ template<typename... Ts> struct ArithmeticStruct // a hetoregenous container(tup
 		arith_t product = front();
 		if (front() != 0)
 		{
-			util::for_each_in_tuple(local, product, [](const auto& element, auto& product) { product *= element; });
+			util::for_each_in_tuple(local, product,
+				[](const auto& element, auto& product) { product *= element; });
 			return (product / front()); // divide by 0 evaded
 		}
 		else
-			return{}; // first element was 0, so product will be 0
+			return {}; // first element was 0, so product will be 0
 	}
 	bool are_all_positive()
 	{
-		static_assert((sizeof...(Ts) > 0), "Checking if all of none are positive makes no sense!");
+		static_assert((sizeof...(Ts) > 0),
+			"Checking if all of none are positive makes no sense!");
 		bool allPositive = true;
-		util::for_each_in_tuple(local, allPositive, [](const auto& element, auto& allPositive) { if (element <= 0) allPositive = false; });
+
+		util::for_each_in_tuple(
+			local, allPositive,
+			[](const auto& element, auto& allPositive)
+			{
+				if (element <= 0) allPositive = false;
+			}
+		);
 		return allPositive;
 	}
 
-	template<typename Func> void doForAll(Func func) // execute a lambda function for every tuple element
+	// execute a lambda function for every tuple element
+	template<typename Func> void doForAll(Func func)
 	{
-		util::for_each_in_tuple(local, func); // execution order will likely not be insertion order
+		// execution order will likely not be insertion order
+		util::for_each_in_tuple(local, func);
 	}
 
 	// return first and last tuple element

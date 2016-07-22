@@ -39,8 +39,11 @@ namespace async_t
 
 		template<typename T> explicit public_key_t(const T& init)
 		{
-			static_assert(std::is_same<T, async_t::key_t>::value, "Wrong public_key init type!");
-			static_assert(!std::is_same<T, async_t::key_t>::value, "public_key_t overload constructor fail!");
+			static_assert(std::is_same<T, async_t::key_t>::value,
+				"Wrong public_key init type!");
+
+			static_assert(!std::is_same<T, async_t::key_t>::value,
+				"public_key_t overload constructor fail!");
 		}
 
 		const key_t& get() const { return val; }
@@ -147,7 +150,9 @@ private:
 						auto prereq_it = _tasks.find(prereq_key);
 						if (prereq_it != _tasks.end())
 						{
-							relevant_task_keys.push_back(prereq_key); // unique remember all relevant tasks
+							// unique remember all relevant tasks
+							relevant_task_keys.push_back(prereq_key);
+
 							busy = prereq_it->second.flag.test_and_set(std::memory_order_acq_rel);
 							if (busy)
 								break;
@@ -155,15 +160,20 @@ private:
 								prereq_it->second.flag.clear(std::memory_order_release);
 						}
 						else
-						{ // should never happen without external manipulation
-							std::cout << "A task from _tasks was removed although it still was a prerequisite!\n";
+						{
+							// should never happen without external manipulation
+							std::cout
+								<< "A task from _tasks was removed although"
+								<< " it still was a prerequisite!\n";
 							throw std::logic_error("Invalid key!");
 						}
 					}
 					if (!busy)
 					{
 						// dispatch task
-						task_it->second.future = std::move(std::async(std::launch::async, std::move(task_it->second.task)));
+						task_it->second.future = std::move(
+							std::async(std::launch::async, std::move(task_it->second.task))
+						);
 						to_remove.push_back(key_it); // mark task for removal
 					}
 				}
@@ -178,20 +188,26 @@ private:
 			for (auto rem_it = to_remove.rbegin(); rem_it != to_remove.rend(); ++rem_it)
 				_unstarted_tasks.erase(*rem_it); // *rem_it is a key_it
 
-													// lower_bound requires a sorted container,
-													// the usage of lower_bound should only start showing with heavy scaling
+			// lower_bound requires a sorted container,
+			// the usage of lower_bound should only start showing with heavy scaling
 
 			if (relevant_task_keys.size() > 1)
 			{ // use a set for sorting and making sure to have unique entries
-				std::set<async_t::key_t> helper(relevant_task_keys.begin(), relevant_task_keys.end());
+				std::set<async_t::key_t> helper
+					(relevant_task_keys.begin(), relevant_task_keys.end());
+
 				relevant_task_keys.assign(helper.begin(), helper.end());
 			}
 
 			// find all irrelevant tasks
 			for (auto task_it = _tasks.begin(); task_it != _tasks.end(); ++task_it)
 			{
-				if (std::lower_bound(relevant_task_keys.begin(), relevant_task_keys.end(), task_it->first) == relevant_task_keys.end())
+				if (std::lower_bound(
+						relevant_task_keys.begin(), relevant_task_keys.end(), task_it->first)
+					== relevant_task_keys.end())
+				{
 					irrelevant_tasks.push_back(task_it);
+				}
 			}
 
 			// remove all irrelevant tasks from _tasks
@@ -203,7 +219,8 @@ private:
 		}
 	}
 
-	async_t::prereq_t remove_finished_prerequisites(const async_t::public_prereq_t& prerequisites)
+	async_t::prereq_t remove_finished_prerequisites
+	(const async_t::public_prereq_t& prerequisites)
 	{
 		async_t::prereq_t ret;
 		ret.reserve(prerequisites.size());
@@ -268,7 +285,10 @@ public:
 		_queue_loop_future.wait();
 	}
 
-	const async_t::public_key_t add_task(const async_t::task_t& task, async_t::public_prereq_t prerequisites = {})
+	const async_t::public_key_t add_task(
+		const async_t::task_t& task,
+		async_t::public_prereq_t prerequisites = {}
+	)
 	{
 		lock();
 		auto sanitzed = remove_finished_prerequisites(prerequisites);
@@ -284,7 +304,10 @@ public:
 		return async_t::public_key_t(_start_key++);
 	}
 
-	const async_t::public_key_t add_task(async_t::task_t&& task, async_t::public_prereq_t prerequisites = {})
+	const async_t::public_key_t add_task(
+		async_t::task_t&& task,
+		async_t::public_prereq_t prerequisites = {}
+	)
 	{
 		lock();
 		auto sanitzed = remove_finished_prerequisites(prerequisites);

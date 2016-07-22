@@ -59,13 +59,19 @@ private:
 		return std::chrono::high_resolution_clock::now();
 	}
 
-	inline void timerEnd(const std::chrono::high_resolution_clock::time_point& start, const size_t iterations)
+	inline void timerEnd(
+		const std::chrono::high_resolution_clock::time_point& start,
+		const size_t iterations
+	)
 	{
-		std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now(); // save end time
+		auto end = std::chrono::high_resolution_clock::now(); // save end time
 
-		double deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count(); // calculate difference in nanosecons
+		double deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
+			(end - start).count(); // calculate difference in nanosecons
 		double deltaTimeSec = deltaTimeNano / 1e9;
-		double averageIndividualTime = deltaTimeNano / iterations; // calculate how long each iteration took on average
+
+		// calculate how long each iteration took on average
+		double averageIndividualTime = deltaTimeNano / iterations;
 
 		_result = std::move(Result(iterations, deltaTimeNano, averageIndividualTime, _testName));
 	}
@@ -73,7 +79,10 @@ private:
 public:
 
 	explicit Test(TestFunc& func, const std::string& testName)
-		: _visible(true), _testFunc(func), _testName(testName), _result(0, 0, 0, "No Test") { }
+		: _visible(true),
+		_testFunc(func),
+		_testName(testName),
+		_result(0, 0, 0, "No Test") { }
 
 	void setInvisible() { _visible = false; }
 
@@ -100,14 +109,18 @@ private:
 	std::vector<std::vector<Result>> _results;
 	std::string _categoryName;
 
-	// simple iteration, only tuple as argument
+	// iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
-		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... }; // execution order matters
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
+	{
+		// execution order matters
+		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... };
 	}
 
 	template<class F, class...Ts>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func) {
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
+	{
+		// call for_each_in_tuple with the constructed index_sequence
 		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
 
@@ -117,7 +130,9 @@ public:
 
 	void runTestRange(const size_t minSize, const size_t maxSize, const size_t stepCount)
 	{ // all test will be executed in construction order
-		std::vector<std::vector<Result>> local(sizeof...(Tests)); // resize to fit amount of tests
+
+		// size construct to fit the amount of tests
+		std::vector<std::vector<Result>> local(sizeof...(Tests));
 
 		auto runTest = [this, &local](const size_t size)
 		{
@@ -148,10 +163,14 @@ public:
 		_results = std::move(local);
 	}
 
-	std::pair<decltype(_results), std::string> getResults() { return std::make_pair(_results, _categoryName); };
+	std::pair<decltype(_results), std::string> getResults()
+	{
+		return std::make_pair(_results, _categoryName);
+	};
 };
 
-template<typename... Tests> static auto createTestCategory(const std::string& categoryName, Tests&... tests)
+template<typename... Tests> static auto createTestCategory
+(const std::string& categoryName, Tests&... tests)
 {
 	return std::move(TestCategory<Tests...>(categoryName, tests...));
 }
@@ -170,7 +189,9 @@ struct SuitConfiguration
 	explicit SuitConfiguration(uint32_t xRes = 1000, uint32_t yRes = 500, size_t stepNumber = 20,
 		const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
 		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
-		const std::string& resultPath = "", const std::string& resName = "Result") // empty resultPath as a folder would have to be constructed
+
+		// empty resultPath as a folder would have to be constructed
+		const std::string& resultPath = "", const std::string& resName = "Result")
 		: xResolution(xRes), yResolution(yRes), stepCount(stepNumber),
 		gnuplotPath(gpPath),
 		xAxisName(xName), yAxisName(yName),
@@ -188,20 +209,30 @@ private:
 
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
-	// simple iteration, only tuple as argument
+	// iteration, only tuple as argument
 	template<class F, class... Ts, std::size_t... Is>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>) {
-		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... }; // execution order matters
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
+	{
+		// execution order matters
+		(void)std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... };
 	}
 
 	template<class F, class...Ts>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func) {
+	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
+	{
+		// call for_each_in_tuple with the constructed index_sequence
 		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
 
 public:
-	explicit TestSuit(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
-		: _suitConfiguration(suitConfiguration), _categorys(std::make_tuple(categorys...)) { }
+
+	// constructor
+	explicit TestSuit(
+		const SuitConfiguration& suitConfiguration,
+		TestCategorys&... categorys
+	)
+		: _suitConfiguration(suitConfiguration),
+		_categorys(std::make_tuple(categorys...)) { }
 
 	void runAllTests(const size_t minSize, const size_t maxSize)
 	{ // all test will be executed in construction order
@@ -249,15 +280,31 @@ public:
 						std::vector<std::pair<double, double>> points;
 						points.reserve(results.size());
 						for (const auto& result : results)
-							points.push_back(std::make_pair(result.getSize(), result.getFullTime()));
-						data.emplace_back(std::move(points), index + 1, index, results.back().getTaskName());
+							points.push_back
+							(
+								std::make_pair(
+								result.getSize(),
+								result.getFullTime())
+							);
+
+						data.emplace_back
+						(
+							std::move(points),
+							index + 1, index,
+							results.back().getTaskName()
+						);
+
 						++index;
 					}
 				}
 				if (data.size() > 0)
-				{ // if there are results, write them to a .dat file and tell gnuplot to create a .png
+				{
+					// if there are results, write them to a .dat file
+					//and tell gnuplot to create a .png
 					plot.setOutput(_suitConfiguration.resultName + category.second);
-					plot.plotData(data, _suitConfiguration.resultDataPath + category.second + ".dat");
+					plot.plotData(
+						data,
+						_suitConfiguration.resultDataPath + category.second + ".dat");
 				}
 				else
 					std::cout << "The category: \"" << category.second << "\" had 0 results!\n";
@@ -268,7 +315,8 @@ public:
 	const decltype(_results)& getResults() const { return _results; }
 };
 
-template<typename... TestCategorys> static auto createTestSuit(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
+template<typename... TestCategorys> static auto createTestSuit
+(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
 {
 	return std::move(TestSuit<TestCategorys...>(suitConfiguration, categorys...));
 }
