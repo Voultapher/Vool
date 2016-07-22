@@ -12,7 +12,8 @@
 # top level folder file exclude
 /*.png
 
-# bat data
+# plot results
+PlotResults/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
