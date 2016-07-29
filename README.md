@@ -17,8 +17,6 @@ GNP requires gnuplot to be installed on the system and that its location is spec
 
 Download or copy header file. Include. Done.
 
----
-
 Example:
 
 ```
