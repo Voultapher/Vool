@@ -109,7 +109,7 @@ private:
 
 	bool _is_sorted;
 
-	void copy_internal(const vec_map<K, V> const& other)
+	void copy_internal(const vec_map<K, V>& other)
 	{
 		reserve(other.capacity());
 		if (other.is_referenced())
@@ -139,7 +139,7 @@ public:
 
 	explicit vec_map(size_t max) : _is_sorted(false) { reserve(max); }
 
-	vec_map(const vec_map<K, V> const& other) : _is_sorted(other.is_sorted())
+	vec_map(const vec_map<K, V>& other) : _is_sorted(other.is_sorted())
 	{
 		copy_internal(std::forward<decltype(other)>(other));
 	}
@@ -159,7 +159,7 @@ public:
 		destroy_internal();
 	}
 
-	vec_map<K, V>& operator= (const vec_map<K, V> const& other) noexcept
+	vec_map<K, V>& operator= (const vec_map<K, V>& other) noexcept
 	{ // copy assignment
 		if (this != &other)
 		{
@@ -180,13 +180,13 @@ public:
 	}
 
 	// insert
-	void insert(const K const& key, const V const& value)
+	void insert(const K& key, const V& value)
 	{ // single element insert
 		_buckets.emplace_back(key, value);
 		_is_sorted = false;
 	}
 
-	void insert(const decltype(_buckets.back()) const& bucket)
+	void insert(const decltype(_buckets.back())& bucket)
 	{ // bucket insert
 		_buckets.emplace_back(bucket.getKey(), bucket.getValue());
 		_is_sorted = false;
@@ -240,14 +240,14 @@ public:
 	}
 
 	// value access
-	V& operator[] (const K const& key) // very fast but no checking for wrong key
+	V& operator[] (const K& key) // very fast but no checking for wrong key
 	{
 		// may crash or return wrong value if used with invalid key
 		if (!_is_sorted) sort();
 		return std::lower_bound(_buckets.begin(), _buckets.end(), key)->getValue();
 	}
 
-	V& at(const K const& key) // should throw properly if used with invalid key
+	V& at(const K& key) // should throw properly if used with invalid key
 	{
 		if (!_is_sorted) sort();
 		auto it = std::lower_bound(_buckets.begin(), _buckets.end(), key);
@@ -258,7 +258,7 @@ public:
 	}
 
 	// erase elements
-	void erase(const K const& key)
+	void erase(const K& key)
 	{ // key erase: container stays sorted
 		if (!_is_sorted) sort();
 		auto first = std::lower_bound(_buckets.begin(), _buckets.end(), key);

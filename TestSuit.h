@@ -28,17 +28,17 @@ struct Result
 {
 private:
 	size_t _size;
-	double _fullTime;
-	double _averageTime;
+	int64_t _fullTime;
+	int64_t _averageTime;
 	std::string _taskName;
 
 public:
-	Result(const size_t size, const double fT, const double aT, const std::string& tN) :
+	Result(const size_t size, const int64_t fT, const int64_t aT, const std::string& tN) :
 		_size(size), _fullTime(fT), _averageTime(aT), _taskName(tN) {}
 
 	const size_t getSize() const { return _size; }
-	const double getFullTime() const { return _fullTime; }
-	const double getAverageTime() const { return _averageTime; }
+	const int64_t getFullTime() const { return _fullTime; }
+	const int64_t getAverageTime() const { return _averageTime; }
 	const std::string& getTaskName() const { return _taskName; }
 };
 
@@ -66,12 +66,12 @@ private:
 	{
 		auto end = std::chrono::high_resolution_clock::now(); // save end time
 
-		double deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
+		int64_t deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
 			(end - start).count(); // calculate difference in nanosecons
-		double deltaTimeSec = deltaTimeNano / 1e9;
+		int64_t deltaTimeSec = deltaTimeNano / static_cast<int64_t>(1e9);
 
 		// calculate how long each iteration took on average
-		double averageIndividualTime = deltaTimeNano / iterations;
+		int64_t averageIndividualTime = deltaTimeNano / iterations;
 
 		_result = std::move(Result(iterations, deltaTimeNano, averageIndividualTime, _testName));
 	}

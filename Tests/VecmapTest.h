@@ -25,13 +25,13 @@ void test_Vecmap()
 	// configuration
 	using K = size_t;
 	using V = BigData;
-	K containerSize = 1e4;
+	K containerSize = static_cast<K>(1e4);
 
 	// Test
 	BigData value; // custom value type
 	value.sampleArray[0] = 33;
 
-	vool::vec_map<K, V> vecMap(1e6); // construction and reserve
+	vool::vec_map<K, V> vecMap(static_cast<size_t>(1e6)); // construction and reserve
 	for (size_t key = 0; key < containerSize; ++key)
 		vecMap.insert(key, value); // key value insertion
 
@@ -49,11 +49,12 @@ void test_Vecmap()
 
 		try
 		{
-			auto bul = vMap.at(2);
+			auto res = vMap.at(2);
+			static_cast<void>(res);
 
 			access = true;
 		}
-		catch (std::exception& e) {}; // this should fail
+		catch (std::exception& e) { static_cast<void>(e); }; // this should fail
 
 		if (access)
 			throw std::exception("could access value using at() with wrong key");

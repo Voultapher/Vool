@@ -17,7 +17,7 @@ namespace vool
 {
 void test_TestSuit()
 {
-	Result resultA(2, 100.0, 60, "Simple Result");
+	Result resultA(2, 100, 60, "Simple Result");
 	if (resultA.getSize() != 2)
 		throw std::exception("Result construction or getSize() failed");
 
@@ -50,6 +50,7 @@ void test_TestSuit()
 	suitConfiguration.resultName = "TST_";
 
 	auto emptyCategory = ("Empty");
+	static_cast<void>(emptyCategory);
 
 	auto suitA = createTestSuit(suitConfiguration, categoryA);
 	suitA.runAllTests(0, size);

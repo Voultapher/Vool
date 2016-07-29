@@ -19,7 +19,7 @@ namespace vool
 
 void test_TaskQueue()
 {
-	size_t testSize = 1e4;
+	size_t testSize = static_cast<size_t>(1e4);
 
 	auto simpleFunc([testSize](std::vector<int>& vec)
 	{
@@ -54,11 +54,14 @@ void test_TaskQueue()
 			auto conditionB = tq.add_task([&vecB, simpleFunc]() { simpleFunc(vecB); });
 
 			// add a task that should only start as soon as the first 2 are finished
-			auto conditionCombined = tq.add_task(
-				[&vecA, &vecB, &res, combinedFunc]() { combinedFunc(vecA, vecB, res); },
+			tq.add_task
+			(
+				[&vecA, &vecB, &res, combinedFunc]()
+				{ combinedFunc(vecA, vecB, res); }, // lambda body
 				{ conditionA, conditionB } // requesites returned from adding task A and B
 			);
 		}
+
 		if (res[testSize - 1] != ((testSize - 1) * 2)) // combinedFunc should fill res
 			throw std::exception("taske_queue did not finish or missed a task");
 	}
@@ -69,9 +72,10 @@ void test_TaskQueue()
 		auto optimalTask([testSize]()
 		{ // non io bound test
 			using val_t = volatile int;
+
 			val_t val = {};
 			for (val_t i = 0; i < testSize; ++i)
-				val += sqrt(i);
+				val += static_cast<std::remove_volatile_t<val_t>>(sqrt(i));
 		});
 
 		task_queue tq;
@@ -99,7 +103,7 @@ void test_TaskQueue()
 
 		auto taskWait = [&cat]()
 		{ std::this_thread::sleep_for(std::chrono::milliseconds(100)); cat = 7; };
-		auto taskPrint = [&cat]() { int print = cat; };
+		auto taskPrint = [&cat]() { int print = cat; static_cast<void>(print); };
 
 		auto waitCond = tq.add_task(taskWait);
 		tq.wait(waitCond);
@@ -118,6 +122,7 @@ void test_TaskQueue()
 		auto task = [](size_t i)
 		{
 			volatile int b = 38888394 % 856;
+			static_cast<void>(b);
 		};
 
 		for (size_t i = 0; i < taskCount; ++i)
@@ -195,7 +200,7 @@ void test_TaskQueue()
 	}
 
 	// # 8 complex multilevel stability test
-	auto heavyTest([](uint64_t seed)
+	auto heavyTest([](unsigned int seed)
 	{
 		using element_t = int;
 		using sum_t = double;
@@ -331,7 +336,7 @@ void test_TaskQueue()
 
 		// repeat the complex test many times to catch rare multithreaded related bugs
 		for (size_t i = 0; i < heavyRepeatCount; ++i)
-			heavyTest(static_cast<uint64_t>(i) * 1445);
+			heavyTest(static_cast<unsigned int>(i) * 1445);
 	}
 
 }

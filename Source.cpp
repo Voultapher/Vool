@@ -37,9 +37,9 @@ int main()
 	runUnitTest("Vecmap", vool::test_Vecmap);
 	runUnitTest("GNP", vool::test_GNP);
 	runUnitTest("TestSuit", vool::test_TestSuit);
-	//runUnitTest("TaskQueue", vool::test_TaskQueue);
+	runUnitTest("TaskQueue", vool::test_TaskQueue);
 
-	std::cout << "\n\tAll unit test done!\n\n";
+	std::cout << "\n\tAll unit test done!\n\n" << std::flush;
 
 	char userInput = std::cin.get();
 	if (userInput == '\n')
