@@ -45,6 +45,7 @@ void test_TestSuit()
 		throw std::exception("category range test error");
 
 	SuitConfiguration suitConfiguration;
+	suitConfiguration.warningsActive = false;
 	suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 	suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
 	suitConfiguration.resultName = "TST_";

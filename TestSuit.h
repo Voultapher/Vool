@@ -180,6 +180,7 @@ struct SuitConfiguration
 {
 	uint32_t xResolution;
 	uint32_t yResolution;
+	bool warningsActive;
 	size_t stepCount;
 	std::string gnuplotPath;
 	std::string xAxisName;
@@ -187,13 +188,19 @@ struct SuitConfiguration
 	std::string resultDataPath;
 	std::string resultName;
 
-	explicit SuitConfiguration(uint32_t xRes = 1000, uint32_t yRes = 500, size_t stepNumber = 20,
+	explicit SuitConfiguration(
+		uint32_t xRes = 1000, uint32_t yRes = 500,
+		bool warnings = true,
+		size_t stepNumber = 20,
 		const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
 		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
 
 		// empty resultPath as a folder would have to be constructed
-		const std::string& resultPath = "", const std::string& resName = "Result")
-		: xResolution(xRes), yResolution(yRes), stepCount(stepNumber),
+		const std::string& resultPath = "", const std::string& resName = "Result"
+	)
+		: xResolution(xRes), yResolution(yRes),
+		warningsActive(warnings),
+		stepCount(stepNumber),
 		gnuplotPath(gpPath),
 		xAxisName(xName), yAxisName(yName),
 		resultDataPath(resultPath), resultName(resName) { }
@@ -309,7 +316,11 @@ public:
 						_suitConfiguration.resultDataPath + category.second + ".dat");
 				}
 				else
-					std::cout << "The category: \"" << category.second << "\" had 0 results!\n";
+					if (_suitConfiguration.warningsActive)
+						std::cout
+						<< "The category: \""
+						<< category.second
+						<< "\" had 0 results!\n";
 			}
 		}
 	}
