@@ -39,11 +39,13 @@ namespace util
 	template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
 	template<typename... Ts> struct all_are_vector : true_if<all_true<is_vector<Ts>::value...>::value> {};
 
-	template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int : true_if<
-		(some_true<std::is_same<Ts, INT_T>::value...>::value
-		&& some_true<std::is_same<Ts, UNIT_T>::value...>::value)
-		|| (some_true<sizeof(INT_T) <= sizeof(Ts) ...>::value
-		&& none_are_floating_point<Ts...>::value)> {};
+	template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int :
+		true_if<
+			(some_true<std::is_same<Ts, INT_T>::value...>::value
+			&& some_true<std::is_same<Ts, UNIT_T>::value...>::value)
+			|| (some_true<sizeof(INT_T) <= sizeof(Ts) ...>::value
+			&& none_are_floating_point<Ts...>::value)
+		> {};
 	
 	template<bool not_empty, bool arith, typename... Ts> struct common_type_helper
 	{
@@ -149,31 +151,32 @@ template<typename... Ts> struct ArithmeticStruct
 		ArithmeticStruct ret(comp);
 		util::tuple_operator(ret.local, local, comp.local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a + b; });
-		return ret;
+		return std::move(ret);
 	}
 	ArithmeticStruct operator- (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
 		util::tuple_operator(ret.local, local, comp.local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a - b; });
-		return ret;
+		return std::move(ret);
 	}
 	ArithmeticStruct operator* (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
 		util::tuple_operator(ret.local, local, comp.local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a * b; });
-		return ret;
+		return std::move(ret);
 	}
 
 	template<typename T> ArithmeticStruct operator* (T t) // scaling
 	{
 		static_assert(std::is_arithmetic<T>::value,
-			"A ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
+			"An ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
+
 		ArithmeticStruct ret(*this);
 		util::for_each_in_tuple(ret.local, t,
 			[](auto& ret, const auto scalar) { ret *= scalar; });
-		return ret;
+		return std::move(ret);
 	}
 
 	// calc sum
@@ -184,6 +187,7 @@ template<typename... Ts> struct ArithmeticStruct
 			[](const auto& element, auto& sum) { sum += element; });
 		return sum;
 	}
+
 	// calc product
 	arith_t product()
 	{
@@ -197,6 +201,7 @@ template<typename... Ts> struct ArithmeticStruct
 		else
 			return {}; // first element was 0, so product will be 0
 	}
+
 	bool are_all_positive()
 	{
 		static_assert((sizeof...(Ts) > 0),
