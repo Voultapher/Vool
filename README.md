@@ -16,7 +16,9 @@ GNP requires gnuplot to be installed on the system and that its location is spec
 ### Installing
 
 Download or copy header file. Include. Done.
+
 ---
+
 Example:
 
 ```
@@ -43,7 +45,7 @@ auto result = cookie1 * cookie2 + cookie1 - cookie2;
 
 ###Vecmap.h
 A key value container built on top of std::vector
-For an in depth explanation and benchmarks read this [blog post](www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
+For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
 ```
 vool::vec_map<K, V> vecMap(static_cast<size_t>(1e6)); // construction and reserve
@@ -127,7 +129,7 @@ Fork and open a pull request
 
 ## Authors
 
-* **Lukas Bergdoll** - [Blog](www.lukas-bergdoll.net/blog)
+* **Lukas Bergdoll** - [Blog](http://www.lukas-bergdoll.net/blog)
 
 ## License
 
