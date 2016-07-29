@@ -16,7 +16,7 @@ GNP requires gnuplot to be installed on the system and that its location is spec
 ### Installing
 
 Download or copy header file. Include. Done.
-
+---
 Example:
 
 ```
@@ -26,11 +26,12 @@ Example:
 ## Running the tests
 
 Easiest way is to download the entire project, compile it and take a look at main() in Source.cpp.
-Make sure that the main folder is included, so that the unit tests can include the needed header.
 
-### Features
+Make sure that the main folder is included, so that the unit tests can include the needed header files.
 
-#Vool.h
+## Features
+
+###Vool.h
 A small collection of meta programming utilities and AritmeticStruct, a heterogeneous matrix.
 
 ```
@@ -40,9 +41,9 @@ auto cookie2 = Ingredient(4.f, 42, 72.3, 'z');
 auto result = cookie1 * cookie2 + cookie1 - cookie2;
 ```
 
-#Vecmap.h
+###Vecmap.h
 A key value container built on top of std::vector
-For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
+For an in depth explanation and benchmarks read this [blog post](www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
 ```
 vool::vec_map<K, V> vecMap(static_cast<size_t>(1e6)); // construction and reserve
@@ -50,7 +51,7 @@ vecMap.insert(key, value); // key value insertion
 V retValue = vecMap[key]; // value lookup using binary search
 ```
 
-#GNP.h
+###GNP.h
 A gnuplot pipe interface, built for convenience. Features include:
 * Easy string concatenation
 * Simple presets for live window or png output
@@ -74,7 +75,7 @@ plotData.emplace_back(dataPoints, 1, 0, "Test Points");
 gnp.plotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
 ```
 
-#TestSuit.h
+###TestSuit.h
 Benchmarking tool using GNP to visualize its results.
 
 ```
@@ -95,7 +96,7 @@ testSuit.runAllTests(0, testSize); // run tests in specified range
 testSuit.renderResults(); // use GNP to outuput png showing the result
 ```
 
-#TaskQueue.h
+###TaskQueue.h
 Smart multithreading helper, designed for small overhead.
 
 ```
@@ -118,7 +119,7 @@ tq.add_task
 
 ## Built With
 
-* MSCV 15 update 3 or Clang 3.7
+* MSCV 15 update 3, or Clang 3.7
 
 ## Contributing
 
@@ -126,7 +127,7 @@ Fork and open a pull request
 
 ## Authors
 
-* **Lukas Bergdoll** - [Blog](lukas-bergdoll.net/blog)
+* **Lukas Bergdoll** - [Blog](www.lukas-bergdoll.net/blog)
 
 ## License
 
