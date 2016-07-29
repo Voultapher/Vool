@@ -15,6 +15,9 @@
 namespace vool
 {
 
+namespace vec_map_util
+{
+
 //Partial spezialization
 template<typename K, typename V, bool need_reference> struct Bucket { };
 
@@ -26,7 +29,7 @@ private:
 public:
 	using value_t = decltype(value);
 
-	explicit Bucket(const K& k, const V& v) : key(k), value(new V(v)) { }
+	Bucket(const K& k, const V& v) : key(k), value(new V(v)) { }
 
 	~Bucket() noexcept { }
 
@@ -63,7 +66,7 @@ public:
 public:
 	using value_t = decltype(value);
 
-	explicit Bucket(const K& k, const value_t& v) : key(k), value(v) { }
+	Bucket(const K& k, const value_t& v) : key(k), value(v) { }
 
 	~Bucket() noexcept { }
 
@@ -94,12 +97,17 @@ public:
 	bool operator>= (const Bucket<K, V, false>& comp) const { return key >= comp.key; }
 };
 
+}
+
 template<typename K, typename V> struct vec_map
 {
 private:
 	static const bool need_reference = (sizeof(V) > (2 * sizeof(size_t)));
-	bool _is_sorted; // tmp
-	std::vector<Bucket<K, V, need_reference>> _buckets;
+
+	using bucket_t = vec_map_util::Bucket<K, V, need_reference>;
+	std::vector<bucket_t> _buckets;
+
+	bool _is_sorted;
 
 	void copy_internal(const vec_map<K, V> const& other)
 	{
@@ -139,6 +147,11 @@ public:
 	explicit vec_map(vec_map<K, V>&& other) : _is_sorted(other.is_sorted())
 	{
 		move_internal(std::forward<decltype(other)>(other));
+	}
+
+	explicit vec_map(std::initializer_list<bucket_t> init) : _is_sorted(false)
+	{
+		_buckets.assign(init.begin(), init.end());
 	}
 
 	~vec_map()
@@ -226,19 +239,20 @@ public:
 		_buckets.clear();
 	}
 
-	// get value
-	V& operator[] (const K const& key)
+	// value access
+	V& operator[] (const K const& key) // very fast but no checking for wrong key
 	{
+		// may crash or return wrong value if used with invalid key
 		if (!_is_sorted) sort();
 		return std::lower_bound(_buckets.begin(), _buckets.end(), key)->getValue();
 	}
 
-	V& at(const K const& key)
+	V& at(const K const& key) // should throw properly if used with invalid key
 	{
 		if (!_is_sorted) sort();
-		auto res = std::lower_bound(_buckets.begin(), _buckets.end(), key);
-		if (res != _buckets.end())
-			return res->getValue();
+		auto it = std::lower_bound(_buckets.begin(), _buckets.end(), key);
+		if (it != _buckets.end() && it->getKey() == key)
+			return it->getValue();
 		else
 			throw std::out_of_range("vec_map key was not valid!");
 	}

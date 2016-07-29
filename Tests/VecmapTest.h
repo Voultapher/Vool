@@ -20,7 +20,7 @@ struct BigData
 	int sampleArray[40];
 };
 
-const char* test_Vecmap()
+void test_Vecmap()
 {
 	// configuration
 	using K = size_t;
@@ -36,10 +36,29 @@ const char* test_Vecmap()
 		vecMap.insert(key, value); // key value insertion
 
 	if (vecMap.size() != containerSize)
-		throw std::exception(); // key value insert error
+		throw std::exception("key value insert error");
 
 	if (vecMap[containerSize - 1].sampleArray[0] != value.sampleArray[0])
-		throw std::exception(); // key value insert error
+		throw std::exception("key value insert error");
+
+	// test if returned value is actually what we looked for
+	{
+		vool::vec_map<K, K> vMap({ { 0, 0 },{ 1, 1 },{ 3, 3 } });
+
+		bool access = false;
+
+		try
+		{
+			auto bul = vMap.at(2);
+
+			access = true;
+		}
+		catch (std::exception& e) {}; // this should fail
+
+		if (access)
+			throw std::exception("could access value using at() with wrong key");
+
+	}
 
 	vool::vec_map<K, V> noReserve; // default construction
 	for (size_t key = containerSize; key < containerSize * 1.5 + 1; ++key)
@@ -49,7 +68,7 @@ const char* test_Vecmap()
 	vecMap.insert(noReserve.begin(), noReserve.end());
 
 	if (vecMap.size() != containerSize * 1.5 + 1)
-		throw std::exception(); // bucket range insert error
+		throw std::exception("bucket range insert error");
 
 	std::vector<std::pair<K, V>> keyAndValueVec;
 	keyAndValueVec.reserve(containerSize);
@@ -59,7 +78,7 @@ const char* test_Vecmap()
 	vool::vec_map<K, V> range;
 	range.insert(keyAndValueVec.begin(), keyAndValueVec.end()); // key value insert
 	if (range.size() != keyAndValueVec.size())
-		throw std::exception(); // key value range insert error
+		throw std::exception("key value range insert error");
 
 	std::vector<K> keyVec;
 	keyVec.reserve(containerSize);
@@ -68,7 +87,7 @@ const char* test_Vecmap()
 
 	range.erase(keyVec.begin(), keyVec.end()); // key range erase
 	if (range.size() != 0)
-		throw std::exception(); // key value range erase error
+		throw std::exception("key value range erase error");
 
 	// forced relocation
 	auto tmp = vecMap; // copy assignment
@@ -87,28 +106,27 @@ const char* test_Vecmap()
 	vecMapCopy.erase(itStart, itEnd); // bucket range erase
 
 	if (vecMapCopy.at(0).sampleArray[0] != value.sampleArray[0])
-		throw std::exception(); // bucket erase and or at() error
+		throw std::exception("bucket erase and or at() error");
 	if (!vecMapCopy.is_sorted())
-		throw std::exception(); // after any kind of read, vec_map should be sorted
+		throw std::exception("after any kind of read, vec_map should be sorted");
 
 	auto frontKey = vecMap.begin()->getKey();
 	vecMap.erase(frontKey); // key erase
 	vecMap.insert(frontKey, value);
 	if (vecMap.is_sorted())
-		throw std::exception(); // after a key value insertion, the container should be unsorted
+		throw std::exception("after a key value insertion, the container should be unsorted");
 
 	auto vecMapSize = vecMap.size();
 	vecMap.reserve(vecMapSize * 2);
 	vecMap.shrink_to_fit(); // should reduce capacity down to size
 	if (vecMap.capacity() != vecMapSize)
-		throw std::exception(); // shrink_to_fit error
+		throw std::exception("shrink_to_fit error");
 
 	vecMapCopy = vecMap;
 	vecMapCopy.clear(); // calls internal vector clear()
 	if (vecMapCopy.size() != 0)
-		throw std::exception(); // clear error
+		throw std::exception("clear error");
 
-	return "Vecmap test was successful!\n";
 }
 
 }

@@ -16,13 +16,13 @@
 namespace vool
 {
 
-const char* test_GNP()
+void test_GNP()
 {
 	const std::string gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 
 	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
 	if (converted != "cat 12.000000 3.300000 man")
-		throw std::exception(); // convert_to_string_v error
+		throw std::exception("convert_to_string_v error");
 
 	Gnuplot gnpOpen(gnuplotPath, true); // stay open until user closes gnuplot
 	Gnuplot gnp(gnuplotPath, false); // close after task termination
@@ -51,7 +51,6 @@ const char* test_GNP()
 	std::vector<PlotData2D<double>> plotDataEmpty;
 	gnp.plotData(plotDataEmpty, "empty.dat"); // test empty, should create new file
 
-	return "GNP test was successful!\n";
 }
 
 }

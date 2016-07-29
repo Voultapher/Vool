@@ -15,11 +15,11 @@
 
 namespace vool
 {
-const char* test_TestSuit()
+void test_TestSuit()
 {
 	Result resultA(2, 100.0, 60, "Simple Result");
 	if (resultA.getSize() != 2)
-		throw std::exception(); // Result construction or getSize() failed
+		throw std::exception("Result construction or getSize() failed");
 
 	size_t size = 100;
 	auto testA = createTest("Build vec", [](const size_t size) {std::vector<int> v(size); });
@@ -29,20 +29,20 @@ const char* test_TestSuit()
 	auto emptyTest = createTest("Empty test", []() {});
 
 	if (resultTestA.getSize() != size)
-		throw std::exception(); // createTest/ runTest/ getResult error
+		throw std::exception("createTest or runTest or getResult error");
 
 	// allocating a vector of size and measuring time should not take 0 nanoseconds
 	if (!(resultTestA.getFullTime() > 0))
-		throw std::exception();
+		throw std::exception("Full test time was 0 nanoseconds");
 
 	auto categoryA = createTestCategory("Test_category_A", testA);
 	categoryA.runTestRange(0, size, 50);
 	auto resultCategoryA = categoryA.getResults();
 
 	if (resultCategoryA.second != "Test_category_A")
-		throw std::exception(); // category name set or get error
+		throw std::exception("category name set or get error");
 	if (resultCategoryA.first.back().back().getSize() > size)
-		throw std::exception(); // category range test error
+		throw std::exception("category range test error");
 
 	SuitConfiguration suitConfiguration;
 	suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
@@ -55,20 +55,20 @@ const char* test_TestSuit()
 	suitA.runAllTests(0, size);
 	auto resultSuitA = suitA.getResults();
 	if (resultSuitA.front().first.back().back().getSize() > size)
-		throw std::exception(); // runAllTests or getResults error
+		throw std::exception("runAllTests or getResults error");
 
 	suitA.runAllTests(0, 0);
 	suitA.runAllTests(0, 1);
 	resultSuitA = suitA.getResults();
 	if (resultSuitA.front().first.back().back().getSize() != 1)
-		throw std::exception(); // runAllTests error, range fault
+		throw std::exception("runAllTests error, range fault");
 
 	suitA.runAllTests(size, size);
 	resultSuitA = suitA.getResults();
 	if (resultSuitA.front().first.back().back().getSize() != size)
-		throw std::exception(); // runAllTests error, range fault
+		throw std::exception("runAllTests error, range fault");
 	if (resultSuitA.front().first.back().size() != 1) // there should only be one result
-		throw std::exception(); // runAllTests error, range fault
+		throw std::exception("runAllTests error, range fault");
 
 	auto testB = createTest("Build 2D vector", [](const size_t size)
 	{ std::vector<std::vector<int>> v(size); });
@@ -85,7 +85,6 @@ const char* test_TestSuit()
 	suitC.runAllTests(0, size);
 	suitC.renderResults();
 
-	return "Testsuit test was successful!\n";
 }
 
 }

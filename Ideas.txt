@@ -6,3 +6,13 @@ Add support for using gnuplot terminal as window rather than only saving them to
 
 TestSuit:
 Expose way of choosing between saving, window, preview and save
+
+Public function for creating container with values:
+reqs:
+- support all arithmetic types
+- have some way of specifing if unique or not
+- have a way controlling density
+
+Vecmap:
+Expose the ability to use custom allocator
+Use std::optional to clear up the value access problem

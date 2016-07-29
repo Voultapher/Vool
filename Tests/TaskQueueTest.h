@@ -17,7 +17,7 @@
 namespace vool
 {
 
-const char* test_TaskQueue()
+void test_TaskQueue()
 {
 	size_t testSize = 1e4;
 
@@ -60,7 +60,7 @@ const char* test_TaskQueue()
 			);
 		}
 		if (res[testSize - 1] != ((testSize - 1) * 2)) // combinedFunc should fill res
-			throw std::exception(); // taske_queue did not finish or missed a task
+			throw std::exception("taske_queue did not finish or missed a task");
 	}
 
 	// #2 optimal scaling
@@ -127,7 +127,7 @@ const char* test_TaskQueue()
 		tq.wait(tq.add_task([&check]() { check = 10; }));
 
 		if (check != 10)
-			throw std::exception(); // the last task added was not finished
+			throw std::exception("the last task added was not finished");
 	}
 
 	// #6 lateTask
@@ -157,7 +157,7 @@ const char* test_TaskQueue()
 
 		// wait_all should wait for one task and fail if taskA was improperly executed
 		if (fail)
-			throw std::exception(); // taskB was not properly executed
+			throw std::exception("taskB was not properly executed");
 	}
 
 	// #7 taskception
@@ -191,7 +191,7 @@ const char* test_TaskQueue()
 		bool equalAfter = (v.size() == size);
 
 		if (equalBefore || !equalAfter)
-			throw std::exception(); // some tasks were not properly executed
+			throw std::exception("some tasks were not properly executed");
 	}
 
 	// # 8 complex multilevel stability test
@@ -319,7 +319,7 @@ const char* test_TaskQueue()
 		}
 
 		if (groov != groovSeq)
-			throw std::exception(); // something in complex test went wrong
+			throw std::exception("something in complex test went wrong");
 	});
 
 	{
@@ -334,7 +334,6 @@ const char* test_TaskQueue()
 			heavyTest(static_cast<uint64_t>(i) * 1445);
 	}
 
-	return "TaskQueue test was successful!\n";
 }
 
 }

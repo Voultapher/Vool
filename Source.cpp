@@ -17,17 +17,33 @@
 
 #include "Vool.h"
 
+void runUnitTest(const char* name, std::function<void()> func)
+{
+	try
+	{
+		func();
+		std::cout << "passed: " << name << "\n";
+	}
+	catch (std::exception& e)
+	{
+		std::cout << "failed: " << name << " " << e.what() << "\n";
+	}
+}
+
 int main()
 {
+	std::cout << "\tRunning unit tests:\n\n";
 
-	std::string testResults = vool::test_Vecmap();
-	std::cout << "\n" << testResults;
-	testResults = vool::test_GNP();
-	std::cout << testResults;
-	testResults = vool::test_TestSuit();
-	std::cout << testResults;
-	testResults = vool::test_TaskQueue();
-	std::cout << testResults << "\n";
+	runUnitTest("Vecmap", vool::test_Vecmap);
+	runUnitTest("GNP", vool::test_GNP);
+	runUnitTest("TestSuit", vool::test_TestSuit);
+	//runUnitTest("TaskQueue", vool::test_TaskQueue);
+
+	std::cout << "\n\tAll unit test done!\n\n";
+
+	char userInput = std::cin.get();
+	if (userInput == '\n')
+		return 0;
 
 	using Ingredient = vool::ArithmeticStruct<float, int, double, char>;
 	auto cookie1 = Ingredient(3.4f, 42, 55.66, 'd');
@@ -68,7 +84,9 @@ int main()
 	//vool::util::needed_arith_type_t<int, std::vector<int>> incompatible; // compiler error
 
 	std::cout << "\nDone!\n" << std::flush;
-	char tmp = std::cin.get(); // pause for user input
+
+	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	std::cin.get();
 
 	return 0;
 }
