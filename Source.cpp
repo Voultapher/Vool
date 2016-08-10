@@ -26,7 +26,7 @@ void runUnitTest(const char* name, std::function<void()> func)
 	}
 	catch (std::exception& e)
 	{
-		std::cout << "failed: " << name << " " << e.what() << "\n";
+		std::cout << "failed: " << name << " - " << e.what() << "\n";
 	}
 }
 

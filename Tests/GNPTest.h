@@ -40,17 +40,13 @@ void test_GNP()
 	gnp.setSaveMode(1200, 500); // change terminal to output png
 	gnp.setOutput("TestGraph"); // Name of .png that is output
 
-	gnp << "plot sin(x) ls 1"; // should save TestPlot.png in source directory
+	gnp << "plot sin(x) ls 1"; // should save TestGraph.png in source directory
 
-	gnp.setOutput("TestDataPlot"); // Name of .png that is output
+	gnp.setOutput("TestDataPlot"); // Name of .png that is saved
 	std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };
 	std::vector<PlotData2D<double>> plotData;
 	plotData.emplace_back(dataPoints, 1, 0, "Test Points");
-	gnp.plotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
-
-	std::vector<PlotData2D<double>> plotDataEmpty;
-	gnp.plotData(plotDataEmpty, "empty.dat"); // test empty, should create new file
-
+	gnp.writeAndPlotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
 }
 
 }

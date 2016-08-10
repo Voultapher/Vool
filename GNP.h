@@ -11,7 +11,6 @@
 #include <iostream>
 #include <fstream>
 #include <type_traits>
-#include <stdexcept>
 
 #ifdef _WIN32
 #define pipe_open _popen
@@ -79,8 +78,6 @@ class Gnuplot
 private:
 	FILE* _gnuPlotPipe;
 
-	//std::unordered_map<uint32_t, std::string> _lineStyles;
-
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
 	template<typename T> static typename std::enable_if<!(std::is_same<std::string, T>::value
@@ -95,13 +92,44 @@ public:
 	{
 		gnuplotPath += persist ? "\\gnuplot -persist" : "\\gnuplot";
 		_gnuPlotPipe = pipe_open(gnuplotPath.c_str(), "w");
-		if (_gnuPlotPipe == NULL)
-			throw std::exception(); // file not found
+
+		if (_gnuPlotPipe == NULL) // pipe_open itself failed
+			throw std::exception("pipe_open failed");
+
+		int ret_val = pipe_close(_gnuPlotPipe);
+		if (ret_val != 0) // command failed
+			throw std::exception("gnuplot filepath not found");
+
+		_gnuPlotPipe = pipe_open(gnuplotPath.c_str(), "w");
 	}
+
+	Gnuplot(Gnuplot&& other) :
+		_gnuPlotPipe(std::move(other._gnuPlotPipe))
+	{
+		other._gnuPlotPipe = nullptr; // indicate that it was moved
+	}
+
+	Gnuplot& operator=(Gnuplot&& other)
+	{
+		if (this != &other)
+		{
+			_gnuPlotPipe = std::move(other._gnuPlotPipe);
+			other._gnuPlotPipe = nullptr; // indicate that it was moved
+		}
+		return *this;
+	}
+
+	explicit Gnuplot(const Gnuplot& other) = delete; // no copy constructor
+
+	Gnuplot& operator=(const Gnuplot& other) = delete; // no copy operator
+
 	~Gnuplot()
 	{
-		fprintf(_gnuPlotPipe, "exit\n");
-		pipe_close(_gnuPlotPipe);
+		if (_gnuPlotPipe != nullptr)
+		{
+			fprintf(_gnuPlotPipe, "exit\n");
+			pipe_close(_gnuPlotPipe);
+		}
 	}
 
 	template<typename... Ts> void operator() (const Ts&... args)
@@ -177,7 +205,16 @@ public:
 		operator()("set grid back ls 12");
 	}
 
-	template<typename T> void plotData(
+	template<typename T> void writeAndPlotData(
+		const std::vector<PlotData2D<T>>& plots,
+		const std::string& filePath = "data.dat"
+	)
+	{
+		writeData(plots, filePath);
+		plotData(plots, filePath);
+	}
+
+	template<typename T> void writeData(
 		const std::vector<PlotData2D<T>>& plots,
 		const std::string& filePath = "data.dat"
 	)
@@ -203,21 +240,30 @@ public:
 				outputFile << "\n\n";
 			}
 			outputFile.close();
-
-			// create command and push it to gnuplot
-			std::string command = "plot '" + filePath + "' ";
-			for (const auto& plot : plots)
-				command += util::convert_to_string_v
-				(
-					"index ", plot.getIndex(),
-					" t '", plot.getName(),
-					"' with linespoints ls ", plot.getLineStyle(),
-					", \'' "
-				);
-			command.erase(command.size() - 5, 5); // remove the last ", \'' "
-
-			operator()(command);
 		}
+	}
+
+	template<typename T> void plotData(
+		const std::vector<PlotData2D<T>>& plots,
+		const std::string& filePath
+	)
+	{
+		// create command and push it to gnuplot
+		std::string command = "plot '" + filePath + "' ";
+		for (const auto& plot : plots)
+		{
+			command += util::convert_to_string_v
+			(
+				"index ", plot.getIndex(),
+				" t '", plot.getName(),
+				"' with linespoints ls ", plot.getLineStyle(),
+				", \'' "
+			);
+		}
+
+		command.erase(command.size() - 5, 5); // remove the last ", \'' "
+
+		operator()(command);
 	}
 };
 

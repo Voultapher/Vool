@@ -53,7 +53,17 @@ void test_TestSuit()
 	auto emptyCategory = ("Empty");
 	static_cast<void>(emptyCategory);
 
+	auto testB = createTest("Build 2D vector", [](const size_t size)
+	{ std::vector<std::vector<int>> v(size); });
+
+	{
+		TestSuit<decltype(categoryA)> suitA(suitConfiguration, categoryA);
+		TestSuit<decltype(categoryA)> suitB(suitConfiguration, categoryA);
+		//suitA = std::move(suitB);
+	}
+
 	auto suitA = createTestSuit(suitConfiguration, categoryA);
+
 	suitA.runAllTests(0, size);
 	auto resultSuitA = suitA.getResults();
 	if (resultSuitA.front().first.back().back().getSize() > size)
@@ -72,8 +82,6 @@ void test_TestSuit()
 	if (resultSuitA.front().first.back().size() != 1) // there should only be one result
 		throw std::exception("runAllTests error, range fault");
 
-	auto testB = createTest("Build 2D vector", [](const size_t size)
-	{ std::vector<std::vector<int>> v(size); });
 	auto categoryB = createTestCategory("container_build", testA, testB);
 	auto suitB = createTestSuit(suitConfiguration, categoryA, categoryB);
 	suitB.runAllTests(0, size);

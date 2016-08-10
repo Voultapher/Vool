@@ -97,9 +97,10 @@ public:
 	const Result& getResult() const { return _result; }
 };
 
-template<typename Func> static auto createTest(const std::string& testName, Func func)
+template<typename Func>
+Test<Func> createTest(const std::string& testName, Func func)
 {
-	return std::move(Test<Func>(std::ref(func), testName));
+	return Test<Func>(std::ref(func), testName);
 }
 
 template<typename... Tests> struct TestCategory
@@ -170,10 +171,10 @@ public:
 	};
 };
 
-template<typename... Tests> static auto createTestCategory
-(const std::string& categoryName, Tests&... tests)
+template<typename... Tests> TestCategory<Tests...>
+createTestCategory (const std::string& categoryName, Tests&... tests)
 {
-	return std::move(TestCategory<Tests...>(categoryName, tests...));
+	return TestCategory<Tests...>(categoryName, tests...);
 }
 
 struct SuitConfiguration
@@ -181,6 +182,7 @@ struct SuitConfiguration
 	uint32_t xResolution;
 	uint32_t yResolution;
 	bool warningsActive;
+	bool pngOutput;
 	size_t stepCount;
 	std::string gnuplotPath;
 	std::string xAxisName;
@@ -188,22 +190,14 @@ struct SuitConfiguration
 	std::string resultDataPath;
 	std::string resultName;
 
-	explicit SuitConfiguration(
-		uint32_t xRes = 1000, uint32_t yRes = 500,
-		bool warnings = true,
-		size_t stepNumber = 20,
-		const std::string& gpPath = "C:\\ProgramData\\gnuplot\\bin",
-		const std::string& xName = "Size", const std::string& yName = "Full Time in nanoseconds",
-
-		// empty resultPath as a folder would have to be constructed
-		const std::string& resultPath = "", const std::string& resName = "Result"
-	)
-		: xResolution(xRes), yResolution(yRes),
-		warningsActive(warnings),
-		stepCount(stepNumber),
-		gnuplotPath(gpPath),
-		xAxisName(xName), yAxisName(yName),
-		resultDataPath(resultPath), resultName(resName) { }
+	explicit SuitConfiguration()
+		: xResolution(1000), yResolution(500),
+		warningsActive(true),
+		pngOutput(true),
+		stepCount(20),
+		gnuplotPath("C:\\ProgramData\\gnuplot\\bin"),
+		xAxisName("Size"), yAxisName("Full Time in nanoseconds"),
+		resultDataPath(""), resultName("Result") { }
 };
 
 // TestSuit
@@ -214,6 +208,8 @@ private:
 	std::vector<std::pair<std::vector<std::vector<Result>>, std::string>> _results; // oy
 
 	SuitConfiguration _suitConfiguration;
+
+	Gnuplot _plot;
 
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
@@ -239,9 +235,21 @@ public:
 	explicit TestSuit(
 		const SuitConfiguration& suitConfiguration,
 		TestCategorys&... categorys
-	)
-		: _suitConfiguration(suitConfiguration),
-		_categorys(std::make_tuple(categorys...)) { }
+	) :
+		_suitConfiguration(suitConfiguration),
+		_categorys(std::make_tuple(categorys...)),
+		_plot(_suitConfiguration.gnuplotPath, false) // may throw
+	{ }
+
+	TestSuit(TestSuit<TestCategorys...>&& other) = default; // move constructor
+
+	TestSuit& operator=(TestSuit<TestCategorys...>&& other) = default; // move operator
+
+
+	explicit TestSuit(const TestSuit& other) = delete; // no copy constructor
+
+	TestSuit& operator=(const TestSuit& other) = delete; // no copy operator
+
 
 	void runAllTests(const size_t minSize, const size_t maxSize)
 	{ // all test will be executed in construction order
@@ -263,16 +271,16 @@ public:
 
 	void renderResults()
 	{
-		Gnuplot plot(_suitConfiguration.gnuplotPath, false);
-		plot.setSaveMode(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
-		plot << "set samples 500";
-		plot.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f);
-		plot.addLineStyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
-		plot.addLineStyle(3, "#9871FF", 2, 3, 7, 1.5f);
-		plot.addLineStyle(4, "#E8803A", 2, 3, 8, 1.5f);
-		plot.addLineStyle(5, "#46E86C", 2, 3, 9, 1.5f);
-		plot.addGrid();
-		plot.setAxis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
+		_plot.setWindowMode(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
+
+		_plot << "set samples 500";
+		_plot.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+		_plot.addLineStyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
+		_plot.addLineStyle(3, "#9871FF", 2, 3, 7, 1.5f);
+		_plot.addLineStyle(4, "#E8803A", 2, 3, 8, 1.5f);
+		_plot.addLineStyle(5, "#46E86C", 2, 3, 9, 1.5f);
+		_plot.addGrid();
+		_plot.setAxis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
 
 		for (const auto& category : _results)
 		{
@@ -309,11 +317,21 @@ public:
 				if (data.size() > 0)
 				{
 					// if there are results, write them to a .dat file
-					//and tell gnuplot to create a .png
-					plot.setOutput(_suitConfiguration.resultName + category.second);
-					plot.plotData(
+					_plot.writeAndPlotData(
 						data,
 						_suitConfiguration.resultDataPath + category.second + ".dat");
+
+					if (_suitConfiguration.pngOutput)
+					{
+						// tell gnu_plot to create a .png
+						_plot.setSaveMode(
+							_suitConfiguration.xResolution,
+							_suitConfiguration.yResolution);
+						_plot.setOutput(_suitConfiguration.resultName + category.second);
+						_plot.plotData(
+							data,
+							_suitConfiguration.resultDataPath + category.second + ".dat");
+					}
 				}
 				else
 					if (_suitConfiguration.warningsActive)
@@ -328,10 +346,10 @@ public:
 	const decltype(_results)& getResults() const { return _results; }
 };
 
-template<typename... TestCategorys> static auto createTestSuit
-(const SuitConfiguration& suitConfiguration, TestCategorys&... categorys)
+template <class... Ts> TestSuit<Ts...>
+createTestSuit(const SuitConfiguration& suitConfiguration, Ts&... categorys)
 {
-	return std::move(TestSuit<TestCategorys...>(suitConfiguration, categorys...));
+	return TestSuit<Ts...>(suitConfiguration, categorys...);
 }
 
 }

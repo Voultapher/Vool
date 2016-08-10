@@ -1,11 +1,9 @@
 TestSuit:
 have a function that tests a single category
 
-GNP:
-Add support for using gnuplot terminal as window rather than only saving them to png
-
 TestSuit:
-Expose way of choosing between saving, window, preview and save
+Clean up createTestSuit with std::optional, as it may throw
+Use Cmake as build system and let it search for gnuplot path and make it a define
 
 Public function for creating container with values:
 reqs:
