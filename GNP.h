@@ -123,7 +123,7 @@ public:
 
 	Gnuplot& operator=(const Gnuplot& other) = delete; // no copy operator
 
-	~Gnuplot()
+	~Gnuplot() noexcept
 	{
 		if (_gnuPlotPipe != nullptr)
 		{

@@ -176,7 +176,7 @@ public:
 		_buckets.assign(init.begin(), init.end());
 	}
 
-	~vec_map() { }
+	~vec_map() noexcept { }
 
 	vec_map<K, V>& operator= (const vec_map<K, V>& other) noexcept
 	{
