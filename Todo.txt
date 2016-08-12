@@ -12,3 +12,5 @@ Reduce the duplication of work and clean up renderResults()
 
 Vecmap:
 take a look at move_internal and maybe improve constructor
+
+Make sure all destructors are noexecpt.

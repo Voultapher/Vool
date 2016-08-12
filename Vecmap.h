@@ -29,11 +29,49 @@ private:
 public:
 	using value_t = decltype(value);
 
-	Bucket(const K& k, const V& v) : key(k), value(new V(v)) { }
+	Bucket(const K& k, const V& v) :
+		key(k),
+		value(new V(v))
+	{ }
 
-	~Bucket() noexcept { }
+	// copy constructor
+	Bucket(const Bucket<K, V, true>& other) :
+		key(other.key),
+		value(new V(*other.value))
+	{ }
 
-	void destroy() { delete value; }
+	// move constructor
+	Bucket(Bucket<K, V, true>&& other) :
+		key(std::move(other.key)),
+		value(other.value) // no new alloc needed
+	{
+		other.value = nullptr;
+	}
+
+	// copy operator
+	Bucket<K, V, true>& operator= (const Bucket<K, V, true>& other)
+	{
+		if (this != &other)
+		{
+			key = other.key;
+			value = new V(other.getValue());
+		}
+		return *this;
+	}
+
+	// move operator
+	Bucket<K, V, true>& operator= (Bucket<K, V, true>&& other)
+	{
+		if (this != &other)
+		{
+			key = std::move(other.key);
+			value = other.value; // no new alloc needed
+			other.value = nullptr;
+		}
+		return *this;
+	}
+
+	~Bucket() noexcept { delete value; }
 
 	V& getValue() const { return *value; }
 
@@ -70,8 +108,6 @@ public:
 
 	~Bucket() noexcept { }
 
-	void destroy() const noexcept { }
-
 	V& getValue() { return value; }
 
 	const V& getValue() const { return std::cref(value); }
@@ -102,7 +138,7 @@ public:
 template<typename K, typename V> struct vec_map
 {
 private:
-	static const bool need_reference = (sizeof(V) > (2 * sizeof(size_t)));
+	static const bool need_reference = (sizeof(V) > (4 * sizeof(size_t)));
 
 	using bucket_t = vec_map_util::Bucket<K, V, need_reference>;
 	std::vector<bucket_t> _buckets;
@@ -119,20 +155,6 @@ private:
 			_buckets = other.get_internal_vec_const();
 	}
 
-	void move_internal(vec_map<K, V>&& other)
-	{
-		reserve(other.capacity());
-		destroy_internal();
-			_buckets = std::move(other.get_internal_vec());
-	}
-
-	inline void destroy_internal()
-	{
-		if (need_reference)
-			for (auto& bucket : _buckets)
-				bucket.destroy();
-	}
-
 public:
 	// construct
 	explicit vec_map() : _is_sorted(true) { }
@@ -144,23 +166,21 @@ public:
 		copy_internal(std::forward<decltype(other)>(other));
 	}
 
-	explicit vec_map(vec_map<K, V>&& other) : _is_sorted(other.is_sorted())
-	{
-		move_internal(std::forward<decltype(other)>(other));
-	}
+	explicit vec_map(vec_map<K, V>&& other) :
+		_is_sorted(other.is_sorted()),
+		_buckets(std::move(other._buckets))
+	{ }
 
 	explicit vec_map(std::initializer_list<bucket_t> init) : _is_sorted(false)
 	{
 		_buckets.assign(init.begin(), init.end());
 	}
 
-	~vec_map()
-	{
-		destroy_internal();
-	}
+	~vec_map() { }
 
 	vec_map<K, V>& operator= (const vec_map<K, V>& other) noexcept
-	{ // copy assignment
+	{
+		// copy assignment
 		if (this != &other)
 		{
 			_is_sorted = other.is_sorted();
@@ -170,11 +190,13 @@ public:
 	}
 
 	vec_map<K, V>& operator= (vec_map<K, V>&& other) //noexcept
-	{ // move assignment
+	{
+		// move assignment
 		if (this != &other)
 		{
 			_is_sorted = other.is_sorted();
-			move_internal(std::forward<decltype(other)>(other));
+			_buckets.reserve(other.capacity());
+			_buckets = std::move(other.get_internal_vec());
 		}
 		return *this;
 	}
@@ -234,8 +256,6 @@ public:
 
 	void clear()
 	{
-		if (need_reference)
-			destroy_internal();
 		_buckets.clear();
 	}
 
@@ -264,7 +284,6 @@ public:
 		auto first = std::lower_bound(_buckets.begin(), _buckets.end(), key);
 		if (first != _buckets.end())
 		{
-			first->destroy();
 			_buckets.erase(first);
 		}
 	}
@@ -300,12 +319,7 @@ public:
 	{ // bucket range erase: container stays sorted, fastest erase
 		if (first != _buckets.end())
 		{
-			if (need_reference)
-				for (auto it = first; it != last; ++it)
-					it->destroy();
 			_buckets.erase(first, last);
-
-			//shrink_to_fit();
 		}
 	}
 
