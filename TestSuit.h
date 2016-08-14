@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
+#include <unordered_set>
 #include <string>
 #include <tuple>
 
@@ -350,6 +351,67 @@ template <class... Ts> TestSuit<Ts...>
 createTestSuit(const SuitConfiguration& suitConfiguration, Ts&... categorys)
 {
 	return TestSuit<Ts...>(suitConfiguration, categorys...);
+}
+
+template<typename T> struct ContainerConfig
+{
+	using type = T;
+
+	size_t size; // resulting size of the container
+	T lowerBound; // lowest possible value in container
+	T upperBound; // highest possible value in container
+	bool unique; // true should make all values unique
+
+	ContainerConfig() :
+		size(0),
+		lowerBound(std::numeric_limits<T>::min()),
+		upperBound(std::numeric_limits<T>::max()),
+		unique(true)
+	{
+		static_assert(std::is_arithmetic<T>::value, "Type T has to be arithmetic!");
+	}
+};
+
+template<typename T> std::vector<T>
+generateContainer(ContainerConfig<T> config)
+{
+	static_assert(std::is_arithmetic<T>::value, "Type T has to be arithmetic!");
+
+	std::vector<T> ret(config.size);
+
+	using distribution_t = std::conditional_t<
+		std::is_floating_point<T>::value,
+		std::uniform_real_distribution<T>,
+		std::uniform_int_distribution<T>
+	>;
+
+	std::mt19937_64 generator(1580); // fixed seed for reproducibility
+
+	distribution_t distribution(config.lowerBound, config.upperBound);
+
+	if (config.unique)
+	{
+		if (std::is_integral<T>::value &&
+			config.upperBound - config.lowerBound < config.size)
+		{
+			throw std::exception("container cannot be unique, given config boundarys");
+		}
+
+		std::unordered_set<T> set;
+		for (auto& element : ret)
+		{
+			do
+			{
+				element = distribution(generator);
+			} while (set.count(element) != 0);
+			set.insert(element);
+		}
+	}
+	else
+		for (auto& element : ret)
+			element = distribution(generator);
+
+	return std::move(ret);
 }
 
 }

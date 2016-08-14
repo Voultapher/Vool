@@ -5,12 +5,6 @@ TestSuit:
 Clean up createTestSuit with std::optional, as it may throw
 Use Cmake as build system and let it search for gnuplot path and make it a define
 
-Public function for creating container with values:
-reqs:
-- support all arithmetic types
-- have some way of specifing if unique or not
-- have a way controlling density
-
 Vecmap:
 Expose the ability to use custom allocator
 Use std::optional to clear up the value access problem
