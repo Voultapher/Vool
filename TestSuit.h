@@ -135,35 +135,41 @@ public:
 	{ // all test will be executed in construction order
 
 		// size construct to fit the amount of tests
-		std::vector<std::vector<Result>> local(sizeof...(Tests));
+		std::vector<std::vector<Result>> categoryResults(sizeof...(Tests));
 
-		auto runTest = [this, &local](const size_t size)
+		auto runCategoryTests = [this, &categoryResults](const size_t size)
 		{
-			size_t i = 0;
-			for_each_in_tuple(_tests, [&i, size, &local](auto& element)
-			{
-				element.runTest(size);
-				if (element.isVisible())
+			auto categoryResults_it = categoryResults.begin();
+
+			for_each_in_tuple(_tests,
+				[&categoryResults_it, size, &categoryResults](auto& element)
 				{
-					local[i].push_back(element.getResult());
-					++i;
+					element.runTest(size);
+
+					if (element.isVisible())
+					{
+						categoryResults_it->push_back(element.getResult());
+						++categoryResults_it;
+					}
 				}
-			});
+			);
 		};
 
-		// this code should only be called if:
+		// runCategoryTests() should only be called if:
 		// maxsize is larger than 0 and larger or equal to minsize
 		if (minSize <= 1)
-			runTest(1);
+			runCategoryTests(1);
 
 		size_t size = 2;
 		for (; size < maxSize && size >= minSize; size += 1 + maxSize / stepCount)
-			runTest(size);
+			runCategoryTests(size);
 
 		if (maxSize > 1)
-			runTest(maxSize);
+			runCategoryTests(maxSize);
 
-		_results = std::move(local);
+		categoryResults.shrink_to_fit();
+
+		_results = std::move(categoryResults);
 	}
 
 	std::pair<decltype(_results), std::string> getResults()
@@ -257,16 +263,16 @@ public:
 		if (maxSize > 0 && maxSize >= minSize)
 		{
 			_results.clear();
-			auto local = std::move(_results);
+			auto categoryResults = std::move(_results);
 
 			// for every category
-			for_each_in_tuple(_categorys, [minSize, maxSize, &local,
+			for_each_in_tuple(_categorys, [minSize, maxSize, &categoryResults,
 				stepCount = _suitConfiguration.stepCount](auto& element)
 			{
 				element.runTestRange(minSize, maxSize, stepCount);
-				local.push_back(element.getResults());
+				categoryResults.push_back(element.getResults());
 			});
-			_results = std::move(local);
+			_results = std::move(categoryResults);
 		}
 	}
 
