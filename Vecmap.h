@@ -161,12 +161,14 @@ public:
 
 	explicit vec_map(size_t max) : _is_sorted(false) { reserve(max); }
 
+	// copy constructor
 	vec_map(const vec_map<K, V>& other) : _is_sorted(other.is_sorted())
 	{
 		copy_internal(std::forward<decltype(other)>(other));
 	}
 
-	explicit vec_map(vec_map<K, V>&& other) :
+	// move constructor
+	vec_map(vec_map<K, V>&& other) :
 		_is_sorted(other.is_sorted()),
 		_buckets(std::move(other._buckets))
 	{ }

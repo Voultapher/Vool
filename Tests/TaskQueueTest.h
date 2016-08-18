@@ -171,7 +171,7 @@ void test_TaskQueue()
 
 		size_t size = 1000;
 		std::vector<int> v;
-		async_t::public_key_t condition;
+		async_t::public_key_t condition(async_t::key_t(0));
 
 		std::promise<void> sync;
 
@@ -223,6 +223,7 @@ void test_TaskQueue()
 				tmp.reserve(size);
 				for (size_t b = 0; b < size; ++b)
 					tmp.push_back(distribution(generator));
+
 				rndVecs.push_back(std::move(tmp));
 			}
 		}

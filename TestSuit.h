@@ -248,14 +248,17 @@ public:
 		_plot(_suitConfiguration.gnuplotPath, false) // may throw
 	{ }
 
-	TestSuit(TestSuit<TestCategorys...>&& other) = default; // move constructor
+	// move constructor
+	TestSuit(TestSuit<TestCategorys...>&& other) = default;
 
-	TestSuit& operator=(TestSuit<TestCategorys...>&& other) = default; // move operator
+	// move operator
+	TestSuit& operator=(TestSuit<TestCategorys...>&& other) = default;
 
+	// no copy constructor
+	TestSuit(const TestSuit& other) = delete;
 
-	explicit TestSuit(const TestSuit& other) = delete; // no copy constructor
-
-	TestSuit& operator=(const TestSuit& other) = delete; // no copy operator
+	// no copy operator
+	TestSuit& operator=(const TestSuit& other) = delete;
 
 
 	void runAllTests(const size_t minSize, const size_t maxSize)

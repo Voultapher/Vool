@@ -31,11 +31,10 @@ namespace async_t
 	struct public_key_t
 	{
 	private:
-		key_t val;
+		key_t _val;
 
 	public:
-		explicit public_key_t() { } // not sure if this is a good idea
-		explicit public_key_t(const key_t& init) : val(init) { }
+		explicit public_key_t(const key_t& init) : _val(init) { }
 
 		template<typename T> explicit public_key_t(const T& init)
 		{
@@ -46,7 +45,7 @@ namespace async_t
 				"public_key_t overload constructor fail!");
 		}
 
-		const key_t& get() const { return val; }
+		const key_t& get() const { return _val; }
 	};
 
 	using prereq_t = std::vector<key_t>;
@@ -269,9 +268,9 @@ public:
 		_queue_loop_future = std::async(std::launch::async, std::move(queue));
 	}
 
-	explicit task_queue(const task_queue& other) = delete; // no copy constructor
+	task_queue(const task_queue& other) = delete; // no copy constructor
 
-	explicit task_queue(task_queue&& other) = delete; // no move constructor
+	task_queue(task_queue&& other) = delete; // no move constructor
 
 	task_queue& operator=(const task_queue& other) = delete; // no copy operator
 
@@ -285,7 +284,7 @@ public:
 		_queue_loop_future.wait();
 	}
 
-	const async_t::public_key_t add_task(
+	async_t::public_key_t add_task(
 		const async_t::task_t& task,
 		async_t::public_prereq_t prerequisites = {}
 	)
@@ -304,7 +303,7 @@ public:
 		return async_t::public_key_t(_start_key++);
 	}
 
-	const async_t::public_key_t add_task(
+	async_t::public_key_t add_task(
 		async_t::task_t&& task,
 		async_t::public_prereq_t prerequisites = {}
 	)
@@ -323,7 +322,7 @@ public:
 		return async_t::public_key_t(_start_key++);
 	}
 
-	void wait(const async_t::public_key_t key)
+	void wait(const async_t::public_key_t& key)
 	{
 		while (true)
 		{
@@ -341,7 +340,7 @@ public:
 		if (keys.size() == 0)
 			finish_all_active_tasks();
 		else
-			for (const auto key : keys)
+			for (const auto& key : keys)
 				wait(key);
 	}
 };
