@@ -131,8 +131,12 @@ namespace util
 }
 
 // a hetoregenous container(tuple) with arithmetic operations
-template<typename... Ts> struct ArithmeticStruct
+template<typename... Ts> class ArithmeticStruct
 {
+private:
+	std::tuple<Ts...> _local;
+
+public:
 	using arith_t = util::needed_arith_type_t<Ts...>;
 
 	explicit ArithmeticStruct(Ts... args)
@@ -141,29 +145,28 @@ template<typename... Ts> struct ArithmeticStruct
 		// ensures that arithmetic operations are posible
 		static_assert(util::all_are_arithmetic<Ts...>::value,
 			"ArithmeticStruct can only be constructed if all types are arithmetic!");
-		local = std::make_tuple(std::move(args)...);
+		_local = std::make_tuple(std::move(args)...);
 	}
-	std::tuple<Ts...> local; // local storage of data
 
 	// custom operators
 	ArithmeticStruct operator+ (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local,
+		util::tuple_operator(ret._local, _local, comp._local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a + b; });
 		return std::move(ret);
 	}
 	ArithmeticStruct operator- (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local,
+		util::tuple_operator(ret._local, _local, comp._local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a - b; });
 		return std::move(ret);
 	}
 	ArithmeticStruct operator* (ArithmeticStruct& comp) // vec add
 	{
 		ArithmeticStruct ret(comp);
-		util::tuple_operator(ret.local, local, comp.local,
+		util::tuple_operator(ret._local, _local, comp._local,
 			[](auto& ret, const auto& a, const auto& b) { ret = a * b; });
 		return std::move(ret);
 	}
@@ -174,7 +177,7 @@ template<typename... Ts> struct ArithmeticStruct
 			"An ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
 
 		ArithmeticStruct ret(*this);
-		util::for_each_in_tuple(ret.local, t,
+		util::for_each_in_tuple(ret._local, t,
 			[](auto& ret, const auto scalar) { ret *= scalar; });
 		return std::move(ret);
 	}
@@ -183,7 +186,7 @@ template<typename... Ts> struct ArithmeticStruct
 	arith_t sum()
 	{
 		arith_t sum = {};
-		util::for_each_in_tuple(local, sum,
+		util::for_each_in_tuple(_local, sum,
 			[](const auto& element, auto& sum) { sum += element; });
 		return sum;
 	}
@@ -194,7 +197,7 @@ template<typename... Ts> struct ArithmeticStruct
 		arith_t product = front();
 		if (front() != 0)
 		{
-			util::for_each_in_tuple(local, product,
+			util::for_each_in_tuple(_local, product,
 				[](const auto& element, auto& product) { product *= element; });
 			return (product / front()); // divide by 0 evaded
 		}
@@ -209,7 +212,7 @@ template<typename... Ts> struct ArithmeticStruct
 		bool allPositive = true;
 
 		util::for_each_in_tuple(
-			local, allPositive,
+			_local, allPositive,
 			[](const auto& element, auto& allPositive)
 			{
 				if (element <= 0) allPositive = false;
@@ -222,20 +225,20 @@ template<typename... Ts> struct ArithmeticStruct
 	template<typename Func> void doForAll(Func func)
 	{
 		// execution order will likely not be insertion order
-		util::for_each_in_tuple(local, func);
+		util::for_each_in_tuple(_local, func);
 	}
 
 	// return first and last tuple element
 	template<typename...> inline auto front()
 	{
 		static_assert((sizeof...(Ts) > 0), "There is no first tuple element to be accessed!");
-		return std::get<0>(local);
+		return std::get<0>(_local);
 	}
 	template<typename...> inline auto& back()
 	{
 		static_assert((sizeof...(Ts) > 0), "There is no last tuple element to be accessed!");
-		return std::get<sizeof...(Ts)-1>(local);
-		//return std::get<std::tuple_size<decltype(local)>::value - 1>(local); // alternative
+		return std::get<sizeof...(Ts)-1>(_local);
+		//return std::get<std::tuple_size<decltype(_local)>::value - 1>(_local); // alternative
 	}
 };
 

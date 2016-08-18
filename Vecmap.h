@@ -19,9 +19,9 @@ namespace vec_map_util
 {
 
 //Partial spezialization
-template<typename K, typename V, bool need_reference> struct Bucket { };
+template<typename K, typename V, bool need_reference> class Bucket { };
 
-template<typename K, typename V> struct Bucket<K, V, true>
+template<typename K, typename V> class Bucket<K, V, true>
 {
 private:
 	K key;
@@ -96,7 +96,7 @@ public:
 	bool operator>= (const Bucket<K, V, true>& comp) const { return key >= comp.key; }
 };
 
-template<typename K, typename V> struct Bucket<K, V, false>
+template<typename K, typename V> class Bucket<K, V, false>
 {
 public:
 	K key;
@@ -135,7 +135,7 @@ public:
 
 }
 
-template<typename K, typename V> struct vec_map
+template<typename K, typename V> class vec_map
 {
 private:
 	static const bool need_reference = (sizeof(V) > (4 * sizeof(size_t)));

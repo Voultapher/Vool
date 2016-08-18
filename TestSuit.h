@@ -45,7 +45,6 @@ public:
 
 template<typename TestFunc> class Test
 {
-
 private:
 
 	//Container_t _container;
@@ -104,7 +103,7 @@ Test<Func> createTest(const std::string& testName, Func func)
 	return Test<Func>(std::ref(func), testName);
 }
 
-template<typename... Tests> struct TestCategory
+template<typename... Tests> class TestCategory
 {
 private:
 	std::tuple<Tests...> _tests;
@@ -112,7 +111,7 @@ private:
 	std::string _categoryName;
 
 	// iteration, only tuple as argument
-	template<class F, class... Ts, std::size_t... Is>
+	template<typename F, typename... Ts, std::size_t... Is>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
 	{
 		// execution order matters
@@ -120,7 +119,7 @@ private:
 			(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
 	}
 
-	template<class F, class...Ts>
+	template<typename F, typename...Ts>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
 	{
 		// call for_each_in_tuple with the constructed index_sequence
@@ -221,7 +220,7 @@ private:
 	template<typename... Ts> void wrapper(Ts&&... args) { }
 
 	// iteration, only tuple as argument
-	template<class F, class... Ts, std::size_t... Is>
+	template<typename F, typename... Ts, std::size_t... Is>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
 	{
 		// execution order matters
@@ -229,7 +228,7 @@ private:
 			(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
 	}
 
-	template<class F, class...Ts>
+	template<typename F, typename...Ts>
 	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
 	{
 		// call for_each_in_tuple with the constructed index_sequence
@@ -356,7 +355,7 @@ public:
 	const decltype(_results)& getResults() const { return _results; }
 };
 
-template <class... Ts> TestSuit<Ts...>
+template <typename... Ts> TestSuit<Ts...>
 createTestSuit(const SuitConfiguration& suitConfiguration, Ts&... categorys)
 {
 	return TestSuit<Ts...>(suitConfiguration, categorys...);

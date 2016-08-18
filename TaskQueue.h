@@ -52,7 +52,7 @@ namespace async_t
 	using public_prereq_t = std::vector<public_key_t>;
 };
 
-struct async_task
+class async_task
 {
 private:
 
@@ -105,7 +105,7 @@ public:
 	}
 };
 
-struct task_queue
+class task_queue
 {
 private:
 	std::atomic_flag _active; // queue loop lock synchronisation primitive
