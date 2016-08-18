@@ -173,7 +173,7 @@ public:
 		_buckets(std::move(other._buckets))
 	{ }
 
-	explicit vec_map(std::initializer_list<bucket_t> init) : _is_sorted(false)
+	vec_map(std::initializer_list<bucket_t> init) : _is_sorted(false)
 	{
 		_buckets.assign(init.begin(), init.end());
 	}
