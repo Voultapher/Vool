@@ -141,31 +141,22 @@ private:
 	static const bool need_reference = (sizeof(V) > (4 * sizeof(size_t)));
 
 	using bucket_t = vec_map_util::Bucket<K, V, need_reference>;
+
 	std::vector<bucket_t> _buckets;
 
 	bool _is_sorted;
 
-	void copy_internal(const vec_map<K, V>& other)
-	{
-		reserve(other.capacity());
-		if (other.is_referenced())
-			for (const auto& bucket : other) // deep copy is needed
-				insert(bucket.getKey(), bucket.getValue());
-		else
-			_buckets = other.get_internal_vec_const();
-	}
-
 public:
-	// construct
-	explicit vec_map() : _is_sorted(true) { }
-
-	explicit vec_map(size_t max) : _is_sorted(false) { reserve(max); }
+	// default constructor
+	explicit vec_map() :
+		_is_sorted(true)
+	{ }
 
 	// copy constructor
-	vec_map(const vec_map<K, V>& other) : _is_sorted(other.is_sorted())
-	{
-		copy_internal(std::forward<decltype(other)>(other));
-	}
+	vec_map(const vec_map<K, V>& other) :
+		_is_sorted(other.is_sorted()),
+		_buckets(other._buckets)
+	{ }
 
 	// move constructor
 	vec_map(vec_map<K, V>&& other) :
@@ -173,31 +164,30 @@ public:
 		_buckets(std::move(other._buckets))
 	{ }
 
-	vec_map(std::initializer_list<bucket_t> init) : _is_sorted(false)
-	{
-		_buckets.assign(init.begin(), init.end());
-	}
+	vec_map(std::initializer_list<bucket_t> init) :
+		_is_sorted(false),
+		_buckets(init.begin(), init.end())
+	{ }
 
 	~vec_map() noexcept { }
 
+	// copy operator
 	vec_map<K, V>& operator= (const vec_map<K, V>& other) noexcept
 	{
-		// copy assignment
 		if (this != &other)
 		{
 			_is_sorted = other.is_sorted();
-			copy_internal(std::forward<decltype(other)>(other));
+			_buckets = other.get_internal_vec_const();
 		}
 		return *this;
 	}
 
+	// move operator
 	vec_map<K, V>& operator= (vec_map<K, V>&& other) //noexcept
 	{
-		// move assignment
 		if (this != &other)
 		{
 			_is_sorted = other.is_sorted();
-			_buckets.reserve(other.capacity());
 			_buckets = std::move(other.get_internal_vec());
 		}
 		return *this;
@@ -232,11 +222,7 @@ public:
 	{ // bucket range insert
 		size_t new_size = size() + std::distance(first, last);
 		reserve(new_size);
-		if (need_reference) // deep copy, as there is no std::back_emplace
-			for (auto it = first; it != last; ++it)
-				insert(*it);
-		else
-			std::copy(first, last, std::back_inserter(_buckets));
+		std::copy(first, last, std::back_inserter(_buckets));
 		_is_sorted = false;
 	}
 
@@ -325,28 +311,30 @@ public:
 		}
 	}
 
-	// get members
-	auto& front() const { return _buckets.front(); }
-
-	auto& back() const { return _buckets.back(); }
-
+	// iterators
 	auto begin() { return _buckets.begin(); }
-
 	auto end() { return _buckets.end(); }
 
-	const auto begin() const { return _buckets.begin(); }
+	const auto cbegin() const { return _buckets.cbegin(); }
+	const auto cend() const { return _buckets.cend(); }
 
-	const auto end() const { return _buckets.end(); }
+	auto rbegin() { return _buckets.rbegin(); }
+	auto rend() { return _buckets.rend(); }
 
+	const auto crbegin() const { return _buckets.crbegin(); }
+	const auto crend() const { return _buckets.crend(); }
+
+	// modifiers
 	auto& get_internal_vec() { return _buckets; }
 
 	const auto& get_internal_vec_const() const { return _buckets; }
 
-	bool is_sorted() const { return _is_sorted; }
-
+	// capacity
 	const size_t size() const { return _buckets.size(); }
 
 	const size_t capacity() const { return _buckets.capacity(); }
+
+	bool is_sorted() const { return _is_sorted; }
 
 	static constexpr bool is_referenced() { return need_reference; }
 };

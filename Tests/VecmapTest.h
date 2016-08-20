@@ -15,25 +15,32 @@
 namespace vool
 {
 
-struct BigData
+namespace test
 {
-	int sampleArray[40];
-};
+	struct BigData
+	{
+		static const size_t size = 40;
+		using array_t = int;
+		array_t sampleArray[size];
+	};
+}
 
 void test_Vecmap()
 {
 	// configuration
 	using K = size_t;
-	using V = BigData;
-	K containerSize = static_cast<K>(1e4);
+	using V = test::BigData;
+	size_t containerSize = static_cast<K>(1e4);
 
 	// Test
-	BigData value; // custom value type
+	V value; // custom value type
 	value.sampleArray[0] = 33;
 
-	vool::vec_map<K, V> vecMap(static_cast<size_t>(1e6)); // construction and reserve
+	// size construction
+	vool::vec_map<K, V> vecMap;
+	vecMap.reserve(containerSize);
 	for (size_t key = 0; key < containerSize; ++key)
-		vecMap.insert(key, value); // key value insertion
+		vecMap.insert(key, value);
 
 	if (vecMap.size() != containerSize)
 		throw std::exception("key value insert error");
@@ -61,72 +68,90 @@ void test_Vecmap()
 
 	}
 
-	vool::vec_map<K, V> noReserve; // default construction
-	for (size_t key = containerSize; key < containerSize * 1.5 + 1; ++key)
-		noReserve.insert(key, value); // key value insertion
+	// begin() and end() test and bucket range insert test
+	{
+		V::array_t rangeLastItem = 5;
 
-	// begin() and end() test + bucket range insert
-	vecMap.insert(noReserve.begin(), noReserve.end());
+		{
+			vool::vec_map<K, V> noReserve; // default construction
+			for (size_t key = containerSize; key < containerSize * 1.5; ++key)
+				noReserve.insert(key, value); // key value insertion
 
-	if (vecMap.size() != containerSize * 1.5 + 1)
-		throw std::exception("bucket range insert error");
+			noReserve[0].sampleArray[V::size - 1] = rangeLastItem;
 
-	std::vector<std::pair<K, V>> keyAndValueVec;
-	keyAndValueVec.reserve(containerSize);
-	for (size_t key = 0; key < containerSize; ++key)
-		keyAndValueVec.push_back(std::make_pair(key, value));
+			vecMap.insert(noReserve.begin(), noReserve.end());
+		}
 
-	vool::vec_map<K, V> range;
-	range.insert(keyAndValueVec.begin(), keyAndValueVec.end()); // key value insert
-	if (range.size() != keyAndValueVec.size())
-		throw std::exception("key value range insert error");
+		if (vecMap.size() != containerSize * 1.5)
+			throw std::exception("bucket range insert size error");
 
-	std::vector<K> keyVec;
-	keyVec.reserve(containerSize);
-	for (const auto& key : keyAndValueVec)
-		keyVec.push_back(key.first);
+		if (vecMap[containerSize].sampleArray[V::size - 1] != rangeLastItem)
+			throw std::exception("bucket range insert copy error");
+	}
 
-	range.erase(keyVec.begin(), keyVec.end()); // key range erase
-	if (range.size() != 0)
-		throw std::exception("key value range erase error");
+	{
+		std::vector<std::pair<K, V>> keyAndValueVec;
+		keyAndValueVec.reserve(containerSize);
+		for (size_t key = 0; key < containerSize; ++key)
+			keyAndValueVec.push_back(std::make_pair(key, value));
+
+		vool::vec_map<K, V> range;
+		range.insert(keyAndValueVec.begin(), keyAndValueVec.end()); // key value insert
+		if (range.size() != keyAndValueVec.size())
+			throw std::exception("key value range insert error");
+
+		std::vector<K> keyVec;
+		keyVec.reserve(containerSize);
+		for (const auto& key : keyAndValueVec)
+			keyVec.push_back(key.first);
+
+		range.erase(keyVec.begin(), keyVec.end()); // key range erase
+		if (range.size() != 0)
+			throw std::exception("key value range erase error");
+	}
 
 	// forced relocation
-	auto tmp = vecMap; // copy assignment
-	vecMap = std::move(tmp); // move assignment
+	{
+		auto tmp = vecMap; // copy assignment
+		vecMap = std::move(tmp); // move assignment
 
-	auto copyConstructed(vecMap); // copy construction
-	auto moveCopy = vecMap;
-	auto moveConstructed(std::move(moveCopy)); // move construction
+		auto copyConstructed(vecMap); // copy construction
+		auto moveCopy = vecMap;
+		auto moveConstructed(std::move(moveCopy)); // move construction
 
-	auto vecMapCopy = vecMap; // copy construct assignment
-	auto itStart = vecMapCopy.begin();
-	std::advance(itStart, (vecMapCopy.size() / 4));
-	auto itEnd = vecMapCopy.begin();
-	std::advance(itEnd, (vecMapCopy.size() / 2));
+		auto vecMapCopy = vecMap; // copy construct assignment
+		auto itStart = vecMapCopy.begin();
+		std::advance(itStart, (vecMapCopy.size() / 4));
+		auto itEnd = vecMapCopy.begin();
+		std::advance(itEnd, (vecMapCopy.size() / 2));
 
-	vecMapCopy.erase(itStart, itEnd); // bucket range erase
+		vecMapCopy.erase(itStart, itEnd); // bucket range erase
 
-	if (vecMapCopy.at(0).sampleArray[0] != value.sampleArray[0])
-		throw std::exception("bucket erase and or at() error");
-	if (!vecMapCopy.is_sorted())
-		throw std::exception("after any kind of read, vec_map should be sorted");
+		if (vecMapCopy.at(0).sampleArray[0] != value.sampleArray[0])
+			throw std::exception("bucket erase and or at() error");
+		if (!vecMapCopy.is_sorted())
+			throw std::exception("after any kind of read, vec_map should be sorted");
+	}
 
-	auto frontKey = vecMap.begin()->getKey();
-	vecMap.erase(frontKey); // key erase
-	vecMap.insert(frontKey, value);
-	if (vecMap.is_sorted())
-		throw std::exception("after a key value insertion, the container should be unsorted");
+	// capacity tests
+	{
+		auto frontKey = vecMap.begin()->getKey();
+		vecMap.erase(frontKey); // key erase
+		vecMap.insert(frontKey, value);
+		if (vecMap.is_sorted())
+			throw std::exception("container should be unsorted after key insert");
 
-	auto vecMapSize = vecMap.size();
-	vecMap.reserve(vecMapSize * 2);
-	vecMap.shrink_to_fit(); // should reduce capacity down to size
-	if (vecMap.capacity() != vecMapSize)
-		throw std::exception("shrink_to_fit error");
+		auto vecMapSize = vecMap.size();
+		vecMap.reserve(vecMapSize * 2);
+		vecMap.shrink_to_fit(); // should reduce capacity down to size
+		if (vecMap.capacity() != vecMapSize)
+			throw std::exception("shrink_to_fit error");
 
-	vecMapCopy = vecMap;
-	vecMapCopy.clear(); // calls internal vector clear()
-	if (vecMapCopy.size() != 0)
-		throw std::exception("clear error");
+		auto vecMapCopy = vecMap;
+		vecMapCopy.clear(); // calls internal vector clear()
+		if (vecMapCopy.size() != 0)
+			throw std::exception("clear error");
+	}
 
 }
 
