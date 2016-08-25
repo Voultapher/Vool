@@ -51,7 +51,7 @@ public:
 	// copy operator
 	Bucket<K, V, true>& operator= (const Bucket<K, V, true>& other)
 	{
-		if (this != &other)
+		if (this != std::addressof(other))
 		{
 			key = other.key;
 			value = new V(other.getValue());
@@ -62,7 +62,7 @@ public:
 	// move operator
 	Bucket<K, V, true>& operator= (Bucket<K, V, true>&& other)
 	{
-		if (this != &other)
+		if (this != std::addressof(other))
 		{
 			key = std::move(other.key);
 			value = other.value; // no new alloc needed
@@ -174,7 +174,7 @@ public:
 	// copy operator
 	vec_map<K, V>& operator= (const vec_map<K, V>& other) noexcept
 	{
-		if (this != &other)
+		if (this != std::addressof(other))
 		{
 			_is_sorted = other.is_sorted();
 			_buckets = other.get_internal_vec_const();
@@ -185,7 +185,7 @@ public:
 	// move operator
 	vec_map<K, V>& operator= (vec_map<K, V>&& other) //noexcept
 	{
-		if (this != &other)
+		if (this != std::addressof(other))
 		{
 			_is_sorted = other.is_sorted();
 			_buckets = std::move(other.get_internal_vec());

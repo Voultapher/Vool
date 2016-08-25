@@ -111,7 +111,7 @@ public:
 
 	Gnuplot& operator=(Gnuplot&& other)
 	{
-		if (this != &other)
+		if (this != std::addressof(other))
 		{
 			_gnuPlotPipe = std::move(other._gnuPlotPipe);
 			other._gnuPlotPipe = nullptr; // indicate that it was moved
