@@ -298,7 +298,6 @@ public:
 				std::vector<PlotData2D<double>> data;
 				data.reserve(category.first.size());
 
-				size_t index = 0;
 				for (const auto& results : category.first)
 				{
 					if (results.size() > 0)
@@ -316,13 +315,21 @@ public:
 						data.emplace_back
 						(
 							std::move(points),
-							index + 1, index,
 							results.back().getTaskName()
 						);
-
-						++index;
 					}
 				}
+
+				// sort test results top to bottom
+				std::sort(data.begin(), data.end(),
+					[](const auto& pointsA, const auto& pointsB)
+				{
+					return pointsA.getData().back() > pointsB.getData().back();
+				});
+
+				for (size_t i = 0; i < data.size(); ++i)
+					data[i].setIndexAndLineStyle(i, i + 1);
+
 				if (data.size() > 0)
 				{
 					// if there are results, write them to a .dat file

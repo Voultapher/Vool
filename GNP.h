@@ -60,12 +60,25 @@ private:
 	std::string _name;
 
 public:
-	PlotData2D(
+	explicit PlotData2D(
 		const std::vector<std::pair<T, T>> d,
-		const uint32_t lS, const uint32_t id,
 		const std::string& name
 	)
-		:_data(d), _lineStyle(lS), _index(id), _name(name) { }
+		:_data(d), _name(name) { }
+
+	explicit PlotData2D(
+		const std::vector<std::pair<T, T>> d,
+		const uint32_t lineStyle,
+		const uint32_t index,
+		const std::string& name
+	)
+		:_data(d), _lineStyle(lineStyle), _index(index), _name(name) { }
+
+	void setIndexAndLineStyle(const uint32_t index, const uint32_t lineStyle)
+	{
+		_index = index;
+		_lineStyle = lineStyle;
+	}
 
 	const auto& getData() const { return _data; }
 	const auto getLineStyle() const { return _lineStyle; }
