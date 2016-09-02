@@ -300,15 +300,13 @@ public:
 		}
 	}
 
+	// bucket range erase: container stays sorted, fastest erase
 	void erase(
 		const decltype(_buckets.begin()) first,
 		const decltype(_buckets.end()) last
 	)
-	{ // bucket range erase: container stays sorted, fastest erase
-		if (first != _buckets.end())
-		{
-			_buckets.erase(first, last);
-		}
+	{
+		_buckets.erase(first, last);
 	}
 
 	// iterators
