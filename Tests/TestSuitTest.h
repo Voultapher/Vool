@@ -26,7 +26,7 @@ void test_TestSuit()
 
 		size_t size = 100;
 		auto testA = createTest("Build vec", [](const size_t size) {std::vector<int> v(size); });
-		testA.runTest(size);
+		testA.runTest(size, 3);
 		auto resultTestA = testA.getResult();
 
 		auto emptyTest = createTest("Empty test", []() {});
@@ -39,7 +39,7 @@ void test_TestSuit()
 			throw std::exception("Full test time was 0 nanoseconds");
 
 		auto categoryA = createTestCategory("Test_category_A", testA);
-		categoryA.runTestRange(0, size, 50);
+		categoryA.runTestRange(0, size, 50, 3);
 		auto resultCategoryA = categoryA.getResults();
 
 		if (resultCategoryA.second != "Test_category_A")

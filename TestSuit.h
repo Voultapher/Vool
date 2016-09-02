@@ -61,14 +61,14 @@ private:
 
 	inline void timerEnd(
 		const std::chrono::high_resolution_clock::time_point& start,
-		const size_t iterations
+		const size_t iterations,
+		const size_t repCount
 	)
 	{
 		auto end = std::chrono::high_resolution_clock::now(); // save end time
 
 		int64_t deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
-			(end - start).count(); // calculate difference in nanosecons
-		int64_t deltaTimeSec = deltaTimeNano / static_cast<int64_t>(1e9);
+			(end - start).count() / repCount; // calculate difference in nanosecons
 
 		// calculate how long each iteration took on average
 		int64_t averageIndividualTime = deltaTimeNano / iterations;
@@ -86,11 +86,12 @@ public:
 
 	void setInvisible() { _visible = false; }
 
-	void runTest(const size_t size)
+	void runTest(const size_t size, const size_t repCount)
 	{
 		auto start = timerStart();
-		_testFunc(size);
-		timerEnd(start, size);
+		for (size_t i = 0; i < repCount; ++i)
+			_testFunc(size);
+		timerEnd(start, size, repCount);
 	}
 
 	const bool isVisible() const { return _visible; }
@@ -130,20 +131,26 @@ public:
 	explicit TestCategory(const std::string& categoryName, Tests&... tests)
 		: _categoryName(categoryName), _tests(std::make_tuple(tests...)) { }
 
-	void runTestRange(const size_t minSize, const size_t maxSize, const size_t stepCount)
+	void runTestRange(
+		const size_t minSize,
+		const size_t maxSize,
+		const size_t stepCount,
+		const size_t repCount
+	)
 	{ // all test will be executed in construction order
 
 		// size construct to fit the amount of tests
 		std::vector<std::vector<Result>> categoryResults(sizeof...(Tests));
 
-		auto runCategoryTests = [this, &categoryResults](const size_t size)
+		auto runCategoryTests = [this, &categoryResults, &repCount]
+		(const size_t size)
 		{
 			auto categoryResults_it = categoryResults.begin();
 
 			for_each_in_tuple(_tests,
-				[&categoryResults_it, size, &categoryResults](auto& element)
+				[&categoryResults_it, size, repCount, &categoryResults](auto& element)
 				{
-					element.runTest(size);
+					element.runTest(size, repCount);
 
 					if (element.isVisible())
 					{
@@ -155,16 +162,12 @@ public:
 		};
 
 		// runCategoryTests() should only be called if:
-		// maxsize is larger than 0 and larger or equal to minsize
-		if (minSize <= 1)
-			runCategoryTests(1);
-
-		size_t size = 2;
-		for (; size < maxSize && size >= minSize; size += 1 + maxSize / stepCount)
+		// maxsize is larger than 0 and larger or equal to minsize	
+		size_t size = minSize == 0 ? 1 : minSize;
+		for (; size < maxSize; size += 1 + maxSize / stepCount)
 			runCategoryTests(size);
 
-		if (maxSize > 1)
-			runCategoryTests(maxSize);
+		runCategoryTests(maxSize);
 
 		categoryResults.shrink_to_fit();
 
@@ -189,7 +192,9 @@ struct SuitConfiguration
 	uint32_t yResolution;
 	bool warningsActive;
 	bool pngOutput;
+	bool persistent;
 	size_t stepCount;
+	size_t repCount;
 	std::string gnuplotPath;
 	std::string xAxisName;
 	std::string yAxisName;
@@ -200,7 +205,9 @@ struct SuitConfiguration
 		: xResolution(1000), yResolution(500),
 		warningsActive(true),
 		pngOutput(true),
+		persistent(false),
 		stepCount(20),
+		repCount(3),
 		gnuplotPath("C:\\ProgramData\\gnuplot\\bin"),
 		xAxisName("Size"), yAxisName("Full Time in nanoseconds"),
 		resultDataPath(""), resultName("Result") { }
@@ -244,7 +251,7 @@ public:
 	) :
 		_suitConfiguration(suitConfiguration),
 		_categorys(std::make_tuple(categorys...)),
-		_plot(_suitConfiguration.gnuplotPath, false) // may throw
+		_plot(_suitConfiguration.gnuplotPath, _suitConfiguration.persistent) // may throw
 	{ }
 
 	// move constructor
@@ -268,12 +275,18 @@ public:
 			auto categoryResults = std::move(_results);
 
 			// for every category
-			for_each_in_tuple(_categorys, [minSize, maxSize, &categoryResults,
-				stepCount = _suitConfiguration.stepCount](auto& element)
-			{
-				element.runTestRange(minSize, maxSize, stepCount);
-				categoryResults.push_back(element.getResults());
-			});
+			for_each_in_tuple(_categorys,
+				[
+					minSize,
+					maxSize,
+					&categoryResults,
+					stepCount = _suitConfiguration.stepCount,
+					repCount = _suitConfiguration.repCount
+				](auto& element)
+				{
+					element.runTestRange(minSize, maxSize, stepCount, repCount);
+					categoryResults.push_back(element.getResults());
+				});
 			_results = std::move(categoryResults);
 		}
 	}
