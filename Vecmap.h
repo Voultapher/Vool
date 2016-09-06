@@ -5,12 +5,13 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#pragma once
+
+#ifndef VOOL_VECMAP_H_INCLUDED
+#define VOOL_VECMAP_H_INCLUDED
 
 #include <vector>
 #include <algorithm>
 #include <iterator>
-#include <type_traits>
 
 namespace vool
 {
@@ -338,3 +339,5 @@ public:
 };
 
 }
+
+#endif // VOOL_VECMAP_H_INCLUDED

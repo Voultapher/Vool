@@ -5,16 +5,20 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#pragma once
 
-#include "TaskQueue.h"
+#include "AllTests.h"
+
+#include <TaskQueue.h>
 
 #include <vector>
 #include <string>
-#include <stdexcept>
 #include <random>
+#include <exception>
 
 namespace vool
+{
+
+namespace test
 {
 
 void test_TaskQueue()
@@ -57,8 +61,8 @@ void test_TaskQueue()
 			tq.add_task
 			(
 				[&vecA, &vecB, &res, combinedFunc]()
-				{ combinedFunc(vecA, vecB, res); }, // lambda body
-				{ conditionA, conditionB } // requesites returned from adding task A and B
+			{ combinedFunc(vecA, vecB, res); }, // lambda body
+			{ conditionA, conditionB } // requesites returned from adding task A and B
 			);
 		}
 
@@ -280,9 +284,9 @@ void test_TaskQueue()
 			// B
 			auto conditionB = tq.add_task(
 				[&sums, &groov, groovle, size = vecs.size()]()
-				{ 
-					groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
-				},
+			{
+				groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
+			},
 				conditionsA);
 
 			// C
@@ -339,6 +343,8 @@ void test_TaskQueue()
 		for (size_t i = 0; i < heavyRepeatCount; ++i)
 			heavyTest(static_cast<unsigned int>(i) * 1445);
 	}
+
+}
 
 }
 

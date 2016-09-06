@@ -5,15 +5,19 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#pragma once
 
-#include <vector>
-#include <string>
-#include <stdexcept>
+#include "AllTests.h"
 
 #include <GNP.h>
 
+#include <vector>
+#include <string>
+#include <exception>
+
 namespace vool
+{
+
+namespace test
 {
 
 void test_GNP()
@@ -47,6 +51,8 @@ void test_GNP()
 	std::vector<PlotData2D<double>> plotData;
 	plotData.emplace_back(dataPoints, 1, 0, "Test Points");
 	gnp.writeAndPlotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
+}
+
 }
 
 }

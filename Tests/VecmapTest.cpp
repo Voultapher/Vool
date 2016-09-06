@@ -5,25 +5,27 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#pragma once
 
-#include <cstdio>
-#include <vector>
+#include "AllTests.h"
 
 #include <Vecmap.h>
+
+#include <vector>
+#include <exception>
 
 namespace vool
 {
 
 namespace test
 {
-	struct BigData
-	{
-		static const size_t size = 40;
-		using array_t = int;
-		array_t sampleArray[size];
-	};
-}
+
+struct BigData
+{
+	static const size_t size = 40;
+	using array_t = int;
+	array_t sampleArray[size];
+};
+
 
 void test_Vecmap()
 {
@@ -152,6 +154,8 @@ void test_Vecmap()
 		if (vecMapCopy.size() != 0)
 			throw std::exception("clear error");
 	}
+
+}
 
 }
 

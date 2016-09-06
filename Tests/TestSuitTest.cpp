@@ -5,17 +5,22 @@
 *
 * This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 */
-#pragma once
 
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <unordered_set>
+#include "AllTests.h"
 
 #include <TestSuit.h>
 
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <exception>
+
 namespace vool
 {
+
+namespace test
+{
+
 void test_TestSuit()
 {
 	// test Result, Test, TestCategory and TestSuit
@@ -48,7 +53,7 @@ void test_TestSuit()
 			throw std::exception("category range test error");
 
 		SuitConfiguration suitConfiguration;
-		suitConfiguration.warningsActive = false;
+		suitConfiguration.warningsActive = true;
 		suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 		suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
 		suitConfiguration.resultName = "TST_";
@@ -109,11 +114,11 @@ void test_TestSuit()
 
 			static_assert(
 				std::is_same<
-					decltype(vec),
-					std::vector<config_t>
+				decltype(vec),
+				std::vector<config_t>
 				>::value,
 				"generateContainer() wrong return type!"
-			);
+				);
 
 			if (vec.size() != config.size)
 				throw std::exception("generateContainer() returned container with wrong size");
@@ -158,6 +163,7 @@ void test_TestSuit()
 			gen_test(config);
 		}
 	}
+}
 
 }
 
