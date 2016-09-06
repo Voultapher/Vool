@@ -24,6 +24,38 @@ void test_GNP()
 {
 	const std::string gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 
+	{
+		using val_t = int;
+		std::vector<std::pair<val_t, val_t>> points({ { 1, 3 }, { 2, 4 } });
+		uint32_t linestyle = 2;
+		uint32_t index = 7;
+		std::string name = "tst";
+
+		// 2 element constructor
+		PlotData2D<val_t> plotA(points, name);
+
+		if (plotA.getData().back() != points.back())
+			throw std::exception("PlotData2D<int> constructorA did not populate _points!");
+
+		if (plotA.getName() != name)
+			throw std::exception("PlotData2D<int> constructorA did not populate _name!");
+
+		// 4 element constructor
+		PlotData2D<val_t> plotB(points, linestyle, index, name);
+
+		if (plotB.getData().back() != points.back())
+			throw std::exception("PlotData2D<int> constructorB did not populate _points!");
+
+		if (plotB.getLinestyle() != linestyle)
+			throw std::exception("PlotData2D<int> constructorB did not populate _linestyle!");
+
+		if (plotB.getIndex() != index)
+			throw std::exception("PlotData2D<int> constructorB did not populate _index!");
+
+		if (plotB.getName() != name)
+			throw std::exception("PlotData2D<int> constructorB did not populate _name!");
+	}
+
 	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
 	if (converted != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");

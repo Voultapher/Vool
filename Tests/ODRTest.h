@@ -15,4 +15,4 @@
 #include <TestSuit.h>
 #include <TaskQueue.h>
 
-#endif VOOL_TESTS_ODRTEST_H_INCLUDED
+#endif // VOOL_TESTS_ODRTEST_H_INCLUDED

@@ -62,8 +62,8 @@ async_task::async_task(
 	const async_t::prereq_t& prereqs
 )
 	:
-	_prerequisites(prereqs),
-	task(init_task(user_task))
+	task(init_task(user_task)),
+	_prerequisites(prereqs)
 {
 	flag.test_and_set(std::memory_order_acq_rel); // default to active
 }
@@ -73,8 +73,8 @@ async_task::async_task(
 	const async_t::prereq_t& prereqs
 )
 	:
-	_prerequisites(prereqs),
-	task(init_task(std::forward<async_t::task_t>(user_task)))
+	task(init_task(std::forward<async_t::task_t>(user_task))),
+	_prerequisites(prereqs)
 {
 	flag.test_and_set(std::memory_order_acq_rel); // default to active
 }

@@ -25,6 +25,13 @@ void test_TestSuit()
 {
 	// test Result, Test, TestCategory and TestSuit
 	{
+		SuitConfiguration suitConfiguration;
+		suitConfiguration.warningsActive = false;
+		suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
+		suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
+		suitConfiguration.resultName = "TST_";
+
+
 		Result resultA(2, 100, 60, "Simple Result");
 		if (resultA.getSize() != 2)
 			throw std::exception("Result construction or getSize() failed");
@@ -51,12 +58,6 @@ void test_TestSuit()
 			throw std::exception("category name set or get error");
 		if (resultCategoryA.first.back().back().getSize() > size)
 			throw std::exception("category range test error");
-
-		SuitConfiguration suitConfiguration;
-		suitConfiguration.warningsActive = true;
-		suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
-		suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
-		suitConfiguration.resultName = "TST_";
 
 		auto emptyCategory = ("Empty");
 		static_cast<void>(emptyCategory);

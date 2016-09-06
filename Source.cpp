@@ -7,7 +7,7 @@
 */
 
 #include "Tests\AllTests.h"
-#include "Tests\ODRTest.h" // include all modules again to check for ODR violation
+#include "Tests\ODRTest.h"
 
 #include <iostream>
 #include <functional>
@@ -33,7 +33,7 @@ int main()
 	runUnitTest("Vecmap", vool::test::test_Vecmap);
 	runUnitTest("GNP", vool::test::test_GNP);
 	runUnitTest("TestSuit", vool::test::test_TestSuit);
-	//runUnitTest("TaskQueue", vool::test::test_TaskQueue);
+	runUnitTest("TaskQueue", vool::test::test_TaskQueue);
 
 	std::cout << "\n\tAll unit test done!\n\n" << std::flush;
 

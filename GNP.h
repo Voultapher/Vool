@@ -22,7 +22,7 @@ public:
 	explicit PlotData2D(
 		const std::vector<std::pair<T, T>>,
 		const std::string&
-	) { };
+	);
 
 	explicit PlotData2D(
 		const std::vector<std::pair<T, T>>,
@@ -31,16 +31,16 @@ public:
 		const std::string&
 	);
 
-	void setIndexAndLineStyle(const uint32_t index, const uint32_t lineStyle);
+	void setIndexAndLineStyle(const uint32_t index, const uint32_t linestyle);
 
-	const auto& getData() const { return _data; }
-	const auto getLineStyle() const { return _lineStyle; }
+	const auto& getData() const { return _points; }
+	const auto getLinestyle() const { return _linestyle; }
 	const auto getIndex() const { return _index; }
 	const auto& getName() const { return _name; }
 
 private:
-	std::vector<std::pair<T, T>> _data;
-	uint32_t _lineStyle;
+	std::vector<std::pair<T, T>> _points;
+	uint32_t _linestyle;
 	uint32_t _index;
 	std::string _name;
 };
@@ -137,12 +137,19 @@ namespace util
 // --- PlotData2D ---
 
 template<typename T> PlotData2D<T>::PlotData2D(
-	const std::vector<std::pair<T, T>> data,
-	const uint32_t lineStyle,
+	const std::vector<std::pair<T, T>> points,
+	const std::string& name
+)
+	:_points(points), _name(name)
+{ }
+
+template<typename T> PlotData2D<T>::PlotData2D(
+	const std::vector<std::pair<T, T>> points,
+	const uint32_t linestyle,
 	const uint32_t index,
 	const std::string& name
 )
-	:_data(data), _lineStyle(lineStyle), _index(index), _name(name)
+	: _points(points), _linestyle(linestyle), _index(index), _name(name)
 { }
 
 // --- Gnuplot ---
@@ -159,11 +166,11 @@ template<typename... Ts> void Gnuplot::operator() (const Ts&... args)
 
 template<typename T> void PlotData2D<T>::setIndexAndLineStyle(
 	const uint32_t index,
-	const uint32_t lineStyle
+	const uint32_t linestyle
 )
 {
 	_index = index;
-	_lineStyle = lineStyle;
+	_linestyle = linestyle;
 }
 
 template<typename T> void Gnuplot::writeAndPlotData(
@@ -217,7 +224,7 @@ template<typename T> void Gnuplot::plotData(
 		(
 			"index ", plot.getIndex(),
 			" t '", plot.getName(),
-			"' with linespoints ls ", plot.getLineStyle(),
+			"' with linespoints ls ", plot.getLinestyle(),
 			", \'' "
 		);
 	}

@@ -148,6 +148,7 @@ struct SuitConfiguration
 template<typename... TestCategorys> class TestSuit
 {
 public:
+	using plots_t = std::vector<PlotData2D<double>>;
 	using category_res_t = std::pair<std::vector<std::vector<Result>>, std::string>;
 	using res_t = std::vector<category_res_t>;
 
@@ -185,11 +186,13 @@ private:
 
 	Gnuplot _plot;
 
-	bool areValidPlots(const std::vector<PlotData2D<double>>&);
+	plots_t createPlots(const category_res_t&);
 
-	void sortResult(std::vector<PlotData2D<double>>&);
+	bool areValidPlots(const plots_t&);
 
-	void pipeResult(const std::vector<PlotData2D<double>>&, const std::string&);
+	void sortResult(plots_t&);
+
+	void pipeResult(const plots_t&, const std::string&);
 };
 
 template <typename... Ts> TestSuit<Ts...>
@@ -338,7 +341,9 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::runAllTests
 	const size_t minSize,
 	const size_t maxSize
 )
-{ // all test will be executed in construction order
+{
+	// all test will be executed in construction order
+
 	if (maxSize == 0 || maxSize < minSize)
 		return;
 
@@ -360,8 +365,40 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::runAllTests
 	});
 }
 
+template<typename... TestCategorys> auto TestSuit<TestCategorys...>::createPlots(
+	const category_res_t& category_res
+) -> plots_t
+{
+	plots_t plots;
+	plots.reserve(category_res.first.size());
+
+	for (const auto& results : category_res.first)
+	{
+		if (results.size() == 0)
+			continue;
+
+		std::vector<std::pair<double, double>> points;
+		points.reserve(results.size());
+		for (const auto& result : results)
+			points.push_back
+			(
+				std::make_pair(
+					result.getSize(),
+					result.getFullTime())
+			);
+
+		plots.emplace_back
+		(
+			std::move(points),
+			results.back().getTaskName()
+		);
+	}
+
+	return plots;
+}
+
 template<typename... TestCategorys> bool TestSuit<TestCategorys...>::areValidPlots(
-	const std::vector<PlotData2D<double>>& plots
+	const plots_t& plots
 )
 {
 	if (plots.size() == 0)
@@ -376,7 +413,7 @@ template<typename... TestCategorys> bool TestSuit<TestCategorys...>::areValidPlo
 }
 
 template<typename... TestCategorys> void TestSuit<TestCategorys...>::sortResult(
-	std::vector<PlotData2D<double>>& plots
+	plots_t& plots
 )
 {
 	// sort test results top to bottom
@@ -396,7 +433,7 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::sortResult(
 }
 
 template<typename... TestCategorys> void TestSuit<TestCategorys...>::pipeResult(
-	const std::vector<PlotData2D<double>>& plots,
+	const plots_t& plots,
 	const std::string& categoryName
 )
 {
@@ -425,30 +462,7 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderCateg
 	const category_res_t& category_res
 )
 {
-	std::vector<PlotData2D<double>> plots;
-	plots.reserve(category_res.first.size());
-
-	for (const auto& results : category_res.first)
-	{
-		if (results.size() == 0)
-			continue;
-
-		std::vector<std::pair<double, double>> points;
-		points.reserve(results.size());
-		for (const auto& result : results)
-			points.push_back
-			(
-				std::make_pair(
-					result.getSize(),
-					result.getFullTime())
-			);
-
-		plots.emplace_back
-		(
-			std::move(points),
-			results.back().getTaskName()
-		);
-	}
+	auto plots = createPlots(category_res);
 
 	if (areValidPlots(plots))
 	{
@@ -458,7 +472,7 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderCateg
 	else if (_suitConfiguration.warningsActive)
 	{
 		std::cout
-			<< "The category_res: \""
+			<< "The category: \""
 			<< category_res.second
 			<< "\" had invalid plots!\n";
 	}
@@ -473,14 +487,15 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderResul
 			if (_suitConfiguration.warningsActive)
 			{
 				std::cout
-					<< "The category_res: \""
+					<< "The category: \""
 					<< category_res.second
 					<< "\" had 0 results!\n";
 			}
-			continue;
 		}
-
-		renderCategory(category_res);
+		else
+		{
+			renderCategory(category_res);
+		}
 	}
 }
 
