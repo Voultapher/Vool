@@ -21,8 +21,8 @@ namespace test
 
 struct BigData
 {
-	static const size_t size = 40;
 	using array_t = int;
+	static const size_t size = (sizeof(size_t) * 6) / sizeof(array_t);
 	array_t sampleArray[size];
 };
 
@@ -33,6 +33,11 @@ void test_Vecmap()
 	using K = size_t;
 	using V = test::BigData;
 	size_t containerSize = static_cast<K>(1e4);
+
+	static_assert(std::is_same<
+			vool::vec_map<K, V>::bucket_t,
+			vool::vec_map_util::Bucket<K, V, true>
+		>::value, "vec_map bucket selection fail!");
 
 	// Test
 	V value; // custom value type
