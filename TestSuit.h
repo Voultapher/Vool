@@ -481,22 +481,16 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderCateg
 template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderResults()
 {
 	for (const auto& category_res : _results)
-	{
 		if (category_res.first.size() == 0)
 		{
 			if (_suitConfiguration.warningsActive)
-			{
 				std::cout
 					<< "The category: \""
 					<< category_res.second
 					<< "\" had 0 results!\n";
-			}
 		}
 		else
-		{
 			renderCategory(category_res);
-		}
-	}
 }
 
 // --- else ---
