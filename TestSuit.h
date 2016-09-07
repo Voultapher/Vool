@@ -530,8 +530,7 @@ template<typename T> std::vector<T> generateContainer(ContainerConfig<T> config)
 		}
 	}
 	else
-		for (auto& element : ret)
-			element = distribution(generator);
+		std::generate(ret.begin(), ret.end(), [&]() { return distribution(generator); });
 
 	return ret;
 }
