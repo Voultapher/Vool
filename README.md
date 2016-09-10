@@ -4,8 +4,7 @@ C++ library
 
 ## Getting Started
 
-Everything is header only. Every header can be compiled independently,
-exceptions are TestSuit and all unit tests.
+A collection of c++ modules, that are build for cross-platform usage, small code footprint and performance.
 
 ### Prerequisities
 
@@ -15,7 +14,7 @@ GNP requires gnuplot to be installed on the system and that its location is spec
 
 ### Installing
 
-Download or copy header file. Include. Done.
+Include "include" folder into your project and include wanted modules
 
 Example:
 
@@ -30,16 +29,6 @@ Easiest way is to download the entire project, compile it and take a look at mai
 Make sure that the main folder is included, so that the unit tests can include the needed header files.
 
 ## Features
-
-###Vool.h
-A small collection of meta programming utilities and AritmeticStruct, a heterogeneous matrix.
-
-```
-using Ingredient = vool::ArithmeticStruct<float, int, double, char>;
-auto cookie1 = Ingredient(3.4f, 42, 55.66, 'd');
-auto cookie2 = Ingredient(4.f, 42, 72.3, 'z');
-auto result = cookie1 * cookie2 + cookie1 - cookie2;
-```
 
 ###Vecmap.h
 A key value container built on top of std::vector
@@ -93,11 +82,12 @@ suitConfiguration.resultName = "Test Name"; // constomize Configuration
 
 auto testSuit = vool::createTestSuit(suitConfiguration, mainCategory);
 testSuit.runAllTests(0, testSize); // run tests in specified range
-testSuit.renderResults(); // use GNP to outuput png showing the result
+testSuit.renderResults(); // use GNP to display results and optionally outuput a png
 ```
 
 ###TaskQueue.h
 Smart multithreading helper, designed for small overhead.
+Internally using std::atomic_flag as synchronization primitive.
 
 ```
 task_queue tq;
