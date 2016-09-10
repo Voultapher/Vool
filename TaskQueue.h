@@ -51,6 +51,15 @@ public:
 	 
 	explicit async_task(async_t::task_t&&, const async_t::prereq_t&);
 
+	// no synchronization problems this way
+	async_task(const async_task& other) = delete;
+
+	async_task(async_task&& other) = delete;
+
+	async_task& operator=(const async_task& other) = delete;
+
+	async_task& operator=(async_task&& other) = delete;
+
 	const async_t::prereq_t& get_prerequisites() const;
 
 private:
@@ -64,6 +73,9 @@ private:
 class task_queue
 {
 public:
+	using tasks_t = std::unordered_map<async_t::key_t, async_task>;
+	using keys_t = std::vector<async_t::key_t>;
+
 	explicit task_queue() noexcept;
 
 	task_queue(const task_queue& other) = delete; // no copy constructor
@@ -88,16 +100,25 @@ public:
 
 	void wait(const async_t::public_key_t&);
 
-	void wait_all(const async_t::public_prereq_t = {});
+	void wait_all();
 
 private:
-	std::atomic_flag _active; // queue loop lock synchronisation primitive
 	std::atomic_flag _sync; // lock synchronisation primitive
-	std::future<void> _queue_loop_future;
+	std::atomic_flag _active; // queue loop lock synchronisation primitive
 
 	async_t::key_t _start_key;
-	std::vector<async_t::key_t> _unstarted_tasks;
-	std::unordered_map<async_t::key_t, async_task> _tasks;
+	keys_t _unstarted_tasks_keys;
+	tasks_t _tasks;
+
+	std::future<void> _queue_loop_future;
+
+	bool task_active(async_task&);
+
+	bool task_ready(const tasks_t::iterator, keys_t&);
+
+	void launch_unstarted(keys_t&);
+
+	void remove_finished_tasks(keys_t&);
 
 	void queue_loop();
 

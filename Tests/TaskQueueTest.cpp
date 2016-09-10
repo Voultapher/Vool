@@ -212,8 +212,8 @@ void test_TaskQueue()
 		// create vector filled with vectors filled with random values
 		std::vector<std::vector<element_t>> rndVecs;
 		{
-			size_t count = 64; // amount of vectors
-			size_t size = 500; // amount of values per vector
+			size_t count = 128; // amount of vectors
+			size_t size = 256; // amount of values per vector
 
 			rndVecs.reserve(count);
 

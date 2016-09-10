@@ -9,3 +9,5 @@ replace vector with std::array
 Vecmap:
 Expose the ability to use custom allocator
 Use std::optional to clear up the value access problem
+
+Have a heuristic benchmark function in tests that displays performance difference between builds
