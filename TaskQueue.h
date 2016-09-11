@@ -41,7 +41,7 @@ namespace async_t
 class async_task
 {
 public:
-	std::atomic_flag flag;
+	std::atomic_flag active_flag;
 	async_t::task_t task;
 
 	// needed to prevent the std::future destructor from blocking

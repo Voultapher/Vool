@@ -47,7 +47,7 @@ async_task::async_task(
 	task(init_task(user_task)),
 	_prerequisites(prereqs)
 {
-	flag.test_and_set(std::memory_order_acq_rel); // default to active
+	active_flag.test_and_set(std::memory_order_acq_rel); // default to active
 }
 
 async_task::async_task(
@@ -58,12 +58,12 @@ async_task::async_task(
 	task(init_task(std::forward<async_t::task_t>(user_task))),
 	_prerequisites(prereqs)
 {
-	flag.test_and_set(std::memory_order_acq_rel); // default to active
+	active_flag.test_and_set(std::memory_order_acq_rel); // default to active
 }
 
 inline async_t::task_t async_task::init_task(const async_t::task_t& user_task) noexcept
 {
-	async_t::task_t res([&user_task, &flag_ref = flag]() -> void
+	async_t::task_t res([&user_task, &flag_ref = active_flag]() -> void
 	{
 		user_task();
 		flag_ref.clear(std::memory_order_release);
@@ -73,7 +73,7 @@ inline async_t::task_t async_task::init_task(const async_t::task_t& user_task) n
 
 inline async_t::task_t async_task::init_task(async_t::task_t&& user_task) noexcept
 {
-	async_t::task_t res([u_task = std::move(user_task), &flag_ref = flag]() -> void
+	async_t::task_t res([u_task = std::move(user_task), &flag_ref = active_flag]() -> void
 	{
 		u_task();
 		flag_ref.clear(std::memory_order_release);
@@ -91,10 +91,10 @@ const async_t::prereq_t& async_task::get_prerequisites() const
 
 inline bool task_queue::task_active(async_task& task)
 {
-	if (task.flag.test_and_set(std::memory_order_acq_rel))
+	if (task.active_flag.test_and_set(std::memory_order_acq_rel))
 		return true;
 	else
-		task.flag.clear(std::memory_order_release);
+		task.active_flag.clear(std::memory_order_release);
 	return false;
 }
 
