@@ -32,57 +32,57 @@ void test_GNP()
 		std::string name = "tst";
 
 		// 2 element constructor
-		PlotData2D<val_t> plotA(points, name);
+		plot_data_2D<val_t> plotA(points, name);
 
-		if (plotA.getData().back() != points.back())
-			throw std::exception("PlotData2D<int> constructorA did not populate _points!");
+		if (plotA.points().back() != points.back())
+			throw std::exception("plot_data_2D<int> constructorA did not populate _points!");
 
-		if (plotA.getName() != name)
-			throw std::exception("PlotData2D<int> constructorA did not populate _name!");
+		if (plotA.name() != name)
+			throw std::exception("plot_data_2D<int> constructorA did not populate _name!");
 
 		// 4 element constructor
-		PlotData2D<val_t> plotB(points, linestyle, index, name);
+		plot_data_2D<val_t> plotB(points, linestyle, index, name);
 
-		if (plotB.getData().back() != points.back())
-			throw std::exception("PlotData2D<int> constructorB did not populate _points!");
+		if (plotB.points().back() != points.back())
+			throw std::exception("plot_data_2D<int> constructorB did not populate _points!");
 
-		if (plotB.getLinestyle() != linestyle)
-			throw std::exception("PlotData2D<int> constructorB did not populate _linestyle!");
+		if (plotB.linestyle() != linestyle)
+			throw std::exception("plot_data_2D<int> constructorB did not populate _linestyle!");
 
-		if (plotB.getIndex() != index)
-			throw std::exception("PlotData2D<int> constructorB did not populate _index!");
+		if (plotB.index() != index)
+			throw std::exception("plot_data_2D<int> constructorB did not populate _index!");
 
-		if (plotB.getName() != name)
-			throw std::exception("PlotData2D<int> constructorB did not populate _name!");
+		if (plotB.name() != name)
+			throw std::exception("plot_data_2D<int> constructorB did not populate _name!");
 	}
 
 	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
 	if (converted != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");
 
-	Gnuplot gnpOpen(gnuplotPath, true); // stay open until user closes gnuplot
-	Gnuplot gnp(gnuplotPath, false); // close after task termination
+	gnuplot gnpOpen(gnuplotPath, true); // stay open until user closes gnuplot
+	gnuplot gnp(gnuplotPath, false); // close after task termination
 
 	gnp << "set samples 10"; // operator<< call
 	gnp("set samples ", 150); // operator() call
 
-	gnp.setAxis("A", "B"); // set axis names
-	gnp.setWindowMode(1200, 500); // set terminal to window
-	gnp.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f); // add lineStyle
-	gnp.addGrid(); // add grid
+	gnp.name_axis("A", "B"); // set axis names
+	gnp.set_terminal_window(1200, 500); // set terminal to window
+	gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f); // add lineStyle
+	gnp.add_grid(); // add grid
 
 	gnp << "plot sin(x) ls 1"; // test plot, should open window and close it again
 
-	gnp.setSaveMode(1200, 500); // change terminal to output png
-	gnp.setOutput("TestGraph"); // Name of .png that is output
+	gnp.set_terminal_png(1200, 500); // change terminal to output png
+	gnp.set_png_filename("TestGraph"); // Name of .png that is output
 
 	gnp << "plot sin(x) ls 1"; // should save TestGraph.png in source directory
 
-	gnp.setOutput("TestDataPlot"); // Name of .png that is saved
+	gnp.set_png_filename("TestDataPlot"); // Name of .png that is saved
 	std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };
-	std::vector<PlotData2D<double>> plotData;
-	plotData.emplace_back(dataPoints, 1, 0, "Test Points");
-	gnp.writeAndPlotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
+	std::vector<plot_data_2D<double>> plot;
+	plot.emplace_back(dataPoints, 1, 0, "Test Points");
+	gnp.write_and_plot(plot, "PlotResults\\PlotData\\GNPTestData.dat");
 }
 
 }

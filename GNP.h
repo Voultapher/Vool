@@ -1,5 +1,5 @@
 /*
-* Vool - Gnuplot interface using popen/ _popen to pipe data to gnuplot
+* Vool - gnuplot interface using popen/ _popen to pipe data to gnuplot
 *
 * Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -16,27 +16,27 @@
 namespace vool
 {
 
-template<typename T> struct PlotData2D
+template<typename T> struct plot_data_2D
 {
 public:
-	explicit PlotData2D(
+	explicit plot_data_2D(
 		const std::vector<std::pair<T, T>>,
 		const std::string&
 	);
 
-	explicit PlotData2D(
+	explicit plot_data_2D(
 		const std::vector<std::pair<T, T>>,
 		const uint32_t,
 		const uint32_t,
 		const std::string&
 	);
 
-	void setIndexAndLineStyle(const uint32_t index, const uint32_t linestyle);
+	void set_index_and_linestyle(const uint32_t index, const uint32_t linestyle);
 
-	const auto& getData() const { return _points; }
-	const auto getLinestyle() const { return _linestyle; }
-	const auto getIndex() const { return _index; }
-	const auto& getName() const { return _name; }
+	const auto& points() const { return _points; }
+	const auto linestyle() const { return _linestyle; }
+	const auto index() const { return _index; }
+	const auto& name() const { return _name; }
 
 private:
 	std::vector<std::pair<T, T>> _points;
@@ -45,38 +45,38 @@ private:
 	std::string _name;
 };
 
-class Gnuplot
+class gnuplot
 {
 public:
-	explicit Gnuplot(std::string, bool = true);
+	explicit gnuplot(std::string, bool = true);
 
-	Gnuplot(Gnuplot&&);
+	gnuplot(gnuplot&&);
 
-	Gnuplot& operator=(Gnuplot&&);
+	gnuplot& operator=(gnuplot&&);
 
-	Gnuplot(const Gnuplot&) = delete; // no copy constructor
+	gnuplot(const gnuplot&) = delete; // no copy constructor
 
-	Gnuplot& operator=(const Gnuplot&) = delete; // no copy operator
+	gnuplot& operator=(const gnuplot&) = delete; // no copy operator
 
-	~Gnuplot() noexcept;
+	~gnuplot() noexcept;
 
 	template<typename... Ts> void operator() (const Ts&...);
 
 	void operator<< (std::string);
 
-	void setAxis(
+	void name_axis(
 		const std::string& = "x-axis",
 		const std::string& = "y-axis",
 		const std::string& = "z-axis"
 	);
 
-	void setSaveMode(const uint32_t, const uint32_t);
+	void set_terminal_png(const uint32_t, const uint32_t);
 
-	void setWindowMode(const uint32_t, const uint32_t);
+	void set_terminal_window(const uint32_t, const uint32_t);
 
-	void setOutput(const std::string&);
+	void set_png_filename(const std::string&);
 
-	void addLineStyle(
+	void add_linestyle(
 		const uint32_t,
 		const std::string&,
 		const uint32_t = 2,
@@ -85,25 +85,25 @@ public:
 		const float = 1.5f
 	);
 
-	void addGrid();
+	void add_grid();
 
-	template<typename T> void writeAndPlotData(
-		const std::vector<PlotData2D<T>>&,
+	template<typename T> void write_and_plot(
+		const std::vector<plot_data_2D<T>>&,
 		const std::string& = "data.dat"
 	);
 
-	template<typename T> void writeData(
-		const std::vector<PlotData2D<T>>&,
+	template<typename T> void write(
+		const std::vector<plot_data_2D<T>>&,
 		const std::string& = "data.dat"
 	);
 
-	template<typename T> void plotData(
-		const std::vector<PlotData2D<T>>&,
+	template<typename T> void plot(
+		const std::vector<plot_data_2D<T>>&,
 		const std::string&
 	);
 
 private:
-	FILE* _gnuPlotPipe;
+	FILE* _gnuplot_pipe;
 };
 
 // ----- IMPLEMENTATION -----
@@ -134,16 +134,16 @@ namespace util
 	}
 }
 
-// --- PlotData2D ---
+// --- plot_data_2D ---
 
-template<typename T> PlotData2D<T>::PlotData2D(
+template<typename T> plot_data_2D<T>::plot_data_2D(
 	const std::vector<std::pair<T, T>> points,
 	const std::string& name
 )
 	:_points(points), _name(name)
 { }
 
-template<typename T> PlotData2D<T>::PlotData2D(
+template<typename T> plot_data_2D<T>::plot_data_2D(
 	const std::vector<std::pair<T, T>> points,
 	const uint32_t linestyle,
 	const uint32_t index,
@@ -152,19 +152,19 @@ template<typename T> PlotData2D<T>::PlotData2D(
 	: _points(points), _linestyle(linestyle), _index(index), _name(name)
 { }
 
-// --- Gnuplot ---
+// --- gnuplot ---
 
-template<typename... Ts> void Gnuplot::operator() (const Ts&... args)
+template<typename... Ts> void gnuplot::operator() (const Ts&... args)
 {
 	// send pack of elements that if needed will get converted to string command to gnuplot
 	auto command = util::convert_to_string_v(args...);
 	command += "\n";
 
-	fprintf(_gnuPlotPipe, "%s\n", command.c_str());
-	fflush(_gnuPlotPipe);
+	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
+	fflush(_gnuplot_pipe);
 }
 
-template<typename T> void PlotData2D<T>::setIndexAndLineStyle(
+template<typename T> void plot_data_2D<T>::set_index_and_linestyle(
 	const uint32_t index,
 	const uint32_t linestyle
 )
@@ -173,58 +173,58 @@ template<typename T> void PlotData2D<T>::setIndexAndLineStyle(
 	_linestyle = linestyle;
 }
 
-template<typename T> void Gnuplot::writeAndPlotData(
-	const std::vector<PlotData2D<T>>& plots,
-	const std::string& filePath
+template<typename T> void gnuplot::write_and_plot(
+	const std::vector<plot_data_2D<T>>& plots,
+	const std::string& filepath
 )
 {
-	writeData(plots, filePath);
-	plotData(plots, filePath);
+	write(plots, filepath);
+	plot(plots, filepath);
 }
 
-template<typename T> void Gnuplot::writeData(
-	const std::vector<PlotData2D<T>>& plots,
-	const std::string& filePath
+template<typename T> void gnuplot::write(
+	const std::vector<plot_data_2D<T>>& plots,
+	const std::string& filepath
 )
 {
 	if (plots.size() > 0)
 	{
-		// write data to filePath
-		std::ofstream outputFile(filePath);
+		// write data to filepath
+		std::ofstream plot_file(filepath);
 
-		if (outputFile.fail()) {
-			std::perror(filePath.c_str());
+		if (plot_file.fail()) {
+			std::perror(filepath.c_str());
 			return;
 		}
 
 		for (const auto& plot : plots)
 		{
-			outputFile << util::convert_to_string_v("#(index ", plot.getIndex(), ")\n");
-			outputFile << "# X Y\n";
-			for (const auto pointPair : plot.getData())
-				outputFile << util::convert_to_string_v
+			plot_file << util::convert_to_string_v("#(index ", plot.index(), ")\n");
+			plot_file << "# X Y\n";
+			for (const auto pointPair : plot.points())
+				plot_file << util::convert_to_string_v
 				("  ", pointPair.first, " ", pointPair.second, "\n");
 
-			outputFile << "\n\n";
+			plot_file << "\n\n";
 		}
-		outputFile.close();
+		plot_file.close();
 	}
 }
 
-template<typename T> void Gnuplot::plotData(
-	const std::vector<PlotData2D<T>>& plots,
-	const std::string& filePath
+template<typename T> void gnuplot::plot(
+	const std::vector<plot_data_2D<T>>& plots,
+	const std::string& filepath
 )
 {
 	// create command and push it to gnuplot
-	std::string command = "plot '" + filePath + "' ";
+	std::string command = "plot '" + filepath + "' ";
 	for (const auto& plot : plots)
 	{
 		command += util::convert_to_string_v
 		(
-			"index ", plot.getIndex(),
-			" t '", plot.getName(),
-			"' with linespoints ls ", plot.getLinestyle(),
+			"index ", plot.index(),
+			" t '", plot.name(),
+			"' with linespoints ls ", plot.linestyle(),
 			", \'' "
 		);
 	}

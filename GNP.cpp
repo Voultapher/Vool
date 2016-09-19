@@ -1,5 +1,5 @@
 /*
-* Vool - Gnuplot interface using popen/ _popen to pipe data to gnuplot
+* Vool - gnuplot interface using popen/ _popen to pipe data to gnuplot
 *
 * Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -19,104 +19,114 @@
 namespace vool
 {
 
-Gnuplot::Gnuplot(std::string gnuplotPath, bool persist)
+gnuplot::gnuplot(std::string gnuplot_path, bool persist)
 {
-	gnuplotPath += persist ? "\\gnuplot -persist" : "\\gnuplot";
-	_gnuPlotPipe = PIPE_OPEN(gnuplotPath.c_str(), "w");
+	gnuplot_path += persist ? "\\gnuplot -persist" : "\\gnuplot";
+	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
 
-	if (_gnuPlotPipe == NULL) // PIPE_OPEN itself failed
+	if (_gnuplot_pipe == NULL) // PIPE_OPEN itself failed
 		throw std::exception("PIPE_OPEN failed");
 
-	int ret_val = PIPE_CLOSE(_gnuPlotPipe);
+	int ret_val = PIPE_CLOSE(_gnuplot_pipe);
 	if (ret_val != 0) // command failed
 		throw std::exception("gnuplot filepath not found");
 
-	_gnuPlotPipe = PIPE_OPEN(gnuplotPath.c_str(), "w");
+	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
 }
 
-Gnuplot::Gnuplot(Gnuplot&& other) :
-	_gnuPlotPipe(std::move(other._gnuPlotPipe))
+gnuplot::gnuplot(gnuplot&& other) :
+	_gnuplot_pipe(std::move(other._gnuplot_pipe))
 {
-	other._gnuPlotPipe = nullptr; // indicate that it was moved
+	other._gnuplot_pipe = nullptr; // indicate that it was moved
 }
 
-Gnuplot& Gnuplot::operator=(Gnuplot&& other)
+gnuplot& gnuplot::operator=(gnuplot&& other)
 {
 	if (this != std::addressof(other))
 	{
-		_gnuPlotPipe = std::move(other._gnuPlotPipe);
-		other._gnuPlotPipe = nullptr; // indicate that it was moved
+		_gnuplot_pipe = std::move(other._gnuplot_pipe);
+		other._gnuplot_pipe = nullptr; // indicate that it was moved
 	}
 	return *this;
 }
 
-Gnuplot::~Gnuplot() noexcept
+gnuplot::~gnuplot() noexcept
 {
-	if (_gnuPlotPipe != nullptr)
+	if (_gnuplot_pipe != nullptr)
 	{
-		fprintf(_gnuPlotPipe, "exit\n");
-		PIPE_CLOSE(_gnuPlotPipe);
+		fprintf(_gnuplot_pipe, "exit\n");
+		PIPE_CLOSE(_gnuplot_pipe);
 	}
 }
 
-void Gnuplot::operator<< (std::string command)
+void gnuplot::operator<< (std::string command)
 {
 	// send direct string command to gnuplot
 	command += "\n";
 
-	fprintf(_gnuPlotPipe, "%s\n", command.c_str());
-	fflush(_gnuPlotPipe);
+	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
+	fflush(_gnuplot_pipe);
 }
 
-void Gnuplot::setAxis(
-	const std::string& xLabel,
-	const std::string& yLabel,
-	const std::string& zLabel
+void gnuplot::name_axis(
+	const std::string& x_label,
+	const std::string& y_label,
+	const std::string& z_zabel
 )
 {
-	operator()("set xlabel \"" + xLabel + "\"");
-	operator()("set ylabel \"" + yLabel + "\"");
-	operator()("set zlabel \"" + zLabel + "\"");
+	operator()("set xlabel \"" + x_label + "\"");
+	operator()("set ylabel \"" + y_label + "\"");
+	operator()("set zlabel \"" + z_zabel + "\"");
 }
 
-void Gnuplot::setSaveMode(const uint32_t horizontalRes, const uint32_t verticalRes)
+void gnuplot::set_terminal_png(
+	const uint32_t horizontal_res,
+	const uint32_t vertical_res
+)
 {
 	operator()(
 		"set terminal pngcairo enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
-		horizontalRes, ", ", verticalRes);
+		horizontal_res, ", ", vertical_res
+	);
 }
 
-void Gnuplot::setWindowMode(const uint32_t horizontalRes, const uint32_t verticalRes)
+void gnuplot::set_terminal_window(
+	const uint32_t horizontal_res,
+	const uint32_t vertical_res
+)
 {
 	operator()(
 		"set terminal wxt enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
-		horizontalRes, ", ", verticalRes);
+		horizontal_res, ", ", vertical_res
+	);
 }
 
-void Gnuplot::setOutput(const std::string& fileName)
-{ // subdirectorys dont work
-	operator()("set output \"" + fileName + ".png\"");
+void gnuplot::set_png_filename(const std::string& filename)
+{
+	// subdirectorys do not work
+	operator()("set output \"" + filename + ".png\"");
 }
 
-void Gnuplot::addLineStyle(
+void gnuplot::add_linestyle(
 	const uint32_t index,
 	const std::string& color,
-	const uint32_t lineWidth,
-	const uint32_t lineType,
-	const uint32_t pointType,
-	const float pointSize
+	const uint32_t linewidth,
+	const uint32_t linetype,
+	const uint32_t pointtype,
+	const float pointsize
 )
 {
 	operator()(
 		"set style line ", index,
 		" lc rgb \"" + color +
-		"\" lw ", lineWidth,
-		" dashtype ", lineType,
-		" pt ", pointType,
-		" ps ", pointSize);
+		"\" lw ", linewidth,
+		" dashtype ", linetype,
+		" pt ", pointtype,
+		" ps ", pointsize
+	);
 }
 
-void Gnuplot::addGrid()
+void gnuplot::add_grid()
 {
 	operator()("set style line 11 lc rgb '#4F4A4A' dashtype 1 lw 1");
 	operator()("set border 3 back ls 11");

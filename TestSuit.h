@@ -148,7 +148,7 @@ struct SuitConfiguration
 template<typename... TestCategorys> class TestSuit
 {
 public:
-	using plots_t = std::vector<PlotData2D<double>>;
+	using plots_t = std::vector<plot_data_2D<double>>;
 	using category_res_t = std::pair<std::vector<std::vector<Result>>, std::string>;
 	using res_t = std::vector<category_res_t>;
 
@@ -184,7 +184,7 @@ private:
 
 	SuitConfiguration _suitConfiguration;
 
-	Gnuplot _plot;
+	gnuplot _plot;
 
 	plots_t createPlots(const category_res_t&);
 
@@ -325,16 +325,16 @@ template<typename... TestCategorys> TestSuit<TestCategorys...>::TestSuit(
 	_categorys(std::make_tuple(categorys...)),
 	_plot(_suitConfiguration.gnuplotPath, _suitConfiguration.persistent) // may throw
 {
-	_plot.setWindowMode(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
+	_plot.set_terminal_window(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
 
 	_plot << "set samples 500";
-	_plot.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f);
-	_plot.addLineStyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
-	_plot.addLineStyle(3, "#9871FF", 2, 3, 7, 1.5f);
-	_plot.addLineStyle(4, "#E8803A", 2, 3, 8, 1.5f);
-	_plot.addLineStyle(5, "#46E86C", 2, 3, 9, 1.5f);
-	_plot.addGrid();
-	_plot.setAxis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
+	_plot.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+	_plot.add_linestyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
+	_plot.add_linestyle(3, "#9871FF", 2, 3, 7, 1.5f);
+	_plot.add_linestyle(4, "#E8803A", 2, 3, 8, 1.5f);
+	_plot.add_linestyle(5, "#46E86C", 2, 3, 9, 1.5f);
+	_plot.add_grid();
+	_plot.name_axis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
 }
 
 template<typename... TestCategorys> void TestSuit<TestCategorys...>::runAllTests(
@@ -404,9 +404,9 @@ template<typename... TestCategorys> bool TestSuit<TestCategorys...>::areValidPlo
 	if (plots.size() == 0)
 		return false;
 
-	size_t plotSize = plots.back().getData().size();
+	size_t plotSize = plots.back().points().size();
 	for (const auto& plot : plots)
-		if (plot.getData().size() == 0 || plot.getData().size() != plotSize)
+		if (plot.points().size() == 0 || plot.points().size() != plotSize)
 			return false;
 
 	return true;
@@ -420,12 +420,12 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::sortResult(
 	std::sort(plots.begin(), plots.end(),
 		[](const auto& pointsA, const auto& pointsB)
 	{
-		return pointsA.getData().back() > pointsB.getData().back();
+		return pointsA.points().back() > pointsB.points().back();
 	});
 
 	for (size_t i = 0; i < plots.size(); ++i)
 	{
-		plots[i].setIndexAndLineStyle(
+		plots[i].set_index_and_linestyle(
 			static_cast<uint32_t>(i),
 			static_cast<uint32_t>(i) + 1
 		);
@@ -441,18 +441,18 @@ template<typename... TestCategorys> void TestSuit<TestCategorys...>::pipeResult(
 	if (plots.size() == 0)
 		return;
 
-	_plot.writeAndPlotData(
+	_plot.write_and_plot(
 		plots,
 		_suitConfiguration.resultDataPath + categoryName + ".dat");
 
 	if (_suitConfiguration.pngOutput)
 	{
 		// tell gnu_plot to create a .png
-		_plot.setSaveMode(
+		_plot.set_terminal_png(
 			_suitConfiguration.xResolution,
 			_suitConfiguration.yResolution);
-		_plot.setOutput(_suitConfiguration.resultName + categoryName);
-		_plot.plotData(
+		_plot.set_png_filename(_suitConfiguration.resultName + categoryName);
+		_plot.plot(
 			plots,
 			_suitConfiguration.resultDataPath + categoryName + ".dat");
 	}
