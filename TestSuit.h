@@ -33,7 +33,33 @@ namespace suithelper
 	struct result_t;
 }
 
-struct suit_config;
+struct suit_config
+{
+	uint32_t x_res;
+	uint32_t y_res;
+	bool warnings_active;
+	bool png_output;
+	bool persistent;
+	size_t steps;
+	size_t repetitions;
+	std::string gnuplot_path;
+	std::string x_name;
+	std::string y_name;
+	std::string output_filepath;
+	std::string filename;
+
+	explicit suit_config()
+		: x_res(1000), y_res(500),
+		warnings_active(true),
+		png_output(true),
+		persistent(false),
+		steps(20),
+		repetitions(3),
+		gnuplot_path("C:\\ProgramData\\gnuplot\\bin"),
+		x_name("Size"), y_name("Full Time in nanoseconds"),
+		output_filepath(""), filename("Result")
+	{}
+};
 
 template<typename... TestCategorys> class test_suit
 {
@@ -42,7 +68,7 @@ public:
 
 	explicit test_suit(
 		const suit_config&,
-		TestCategorys&...
+		TestCategorys&&...
 	);
 
 	test_suit(const test_suit&) = delete;
@@ -71,34 +97,6 @@ private:
 	void pipe_result(const result_t&);
 };
 
-struct suit_config
-{
-	uint32_t x_res;
-	uint32_t y_res;
-	bool warnings_active;
-	bool png_output;
-	bool persistent;
-	size_t steps;
-	size_t repetitions;
-	std::string gnuplot_path;
-	std::string x_name;
-	std::string y_name;
-	std::string output_filepath;
-	std::string filename;
-
-	explicit suit_config()
-		: x_res(1000), y_res(500),
-		warnings_active(true),
-		png_output(true),
-		persistent(false),
-		steps(20),
-		repetitions(3),
-		gnuplot_path("C:\\ProgramData\\gnuplot\\bin"),
-		x_name("Size"), y_name("Full Time in nanoseconds"),
-		output_filepath(""), filename("Result")
-	{ }
-};
-
 namespace suithelper
 {
 	struct result_t
@@ -123,14 +121,13 @@ namespace suithelper
 	template<typename Func> class test
 	{
 	public:
-		explicit test(Func&, const std::string&);
-
-		void flag_invisible() { _visible = false; }
+		explicit test(const std::string&, Func&&);
 
 		point_t run_test(const size_t, const size_t);
 
-		const std::string& name() const { return _name; }
+		void flag_invisible() { _visible = false; }
 
+		const std::string& name() const { return _name; }
 		const bool visible() const { return _visible; }
 
 	private:
@@ -153,8 +150,9 @@ namespace suithelper
 	template<typename... Tests> class test_category
 	{
 	public:
-		explicit test_category(const std::string& categoryName, Tests&... tests)
-			: _name(categoryName), _tests(std::make_tuple(tests...))
+		explicit test_category(const std::string& categoryName, Tests&&... tests)
+			: _name(categoryName),
+			_tests(std::forward<Tests>(tests)...)
 		{ }
 
 		graph_t perform_tests(
@@ -225,12 +223,12 @@ namespace suithelper
 	// --- test ---
 
 	template<typename T> test<T>::test(
-		T& func,
-		const std::string& name
+		const std::string& name,
+		T&& func
 	)
 		:
-		_func(func),
 		_name(name),
+		_func(std::forward<T>(func)),
 		_visible(true)
 	{ }
 
@@ -339,10 +337,10 @@ namespace suithelper
 
 template<typename... Ts> test_suit<Ts...>::test_suit(
 	const suit_config& suit_configuration,
-	Ts&... categorys
+	Ts&&... categorys
 ) :
 	_suit_config(suit_configuration),
-	_categorys(std::make_tuple(categorys...)),
+	_categorys(std::forward<Ts>(categorys)...),
 	_gnuplot(_suit_config.gnuplot_path, _suit_config.persistent) // may throw
 {
 	_gnuplot.set_terminal_window(_suit_config.x_res, _suit_config.y_res);
@@ -457,25 +455,31 @@ template<typename... Ts> void test_suit<Ts...>::render_results()
 
 // --- make funcitons ---
 
-template<typename T> suithelper::test<T> createTest(
+template<typename T> suithelper::test<T> make_test(
 	const std::string& testName, T func
 )
 {
-	return suithelper::test<T>(std::ref(func), testName);
+	return suithelper::test<T>(testName, std::forward<T>(func));
 }
 
-template<typename... Ts> suithelper::test_category<Ts...>createTestCategory(
-	const std::string& categoryName, Ts&... tests
+template<typename... Ts> suithelper::test_category<Ts...>make_test_category(
+	const std::string& categoryName, Ts&&... tests
 )
 {
-	return suithelper::test_category<Ts...>(categoryName, tests...);
+	return suithelper::test_category<Ts...>(
+		categoryName,
+		std::forward<Ts>(tests)...
+	);
 }
 
-template <typename... Ts> test_suit<Ts...> createTestSuit(
-	const suit_config& suit_configuration, Ts&... categorys
+template <typename... Ts> test_suit<Ts...> make_test_suit(
+	const suit_config& suit_configuration, Ts&&... categorys
 )
 {
-	return test_suit<Ts...>(suit_configuration, categorys...);
+	return test_suit<Ts...>(
+		suit_configuration,
+		std::forward<Ts>(categorys)...
+	);
 }
 
 // --- generate_container ---

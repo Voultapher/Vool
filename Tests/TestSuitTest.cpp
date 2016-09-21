@@ -35,24 +35,24 @@ void test_TestSuit()
 		size_t steps = 50;
 		size_t repetitions = 3;
 
-		auto testA = createTest("build vec",
+		auto testA = make_test("build vec",
 			[](const size_t size)
 			{ std::vector<int> v(size); }
 		);
 
 		auto resultTestA = testA.run_test(size, 3);
 
-		auto emptyTest = createTest("Empty test", []() {});
+		auto emptyTest = make_test("Empty test", []() {});
 
 		if (resultTestA.first != size)
-			throw std::exception("createTest or run_test or getResult error");
+			throw std::exception("make_test or run_test or getResult error");
 
 		// allocating a vector of size and measuring time should not take 0 nanoseconds
 		if (!(resultTestA.second > 0))
 			throw std::exception("Full test time was 0 nanoseconds");
 
 		const char* nameA = "Test_category_A";
-		auto categoryA = createTestCategory(nameA, testA);
+		auto categoryA = make_test_category(nameA, testA);
 
 		if (categoryA.name() != nameA)
 			throw std::exception("category name set or get error");
@@ -60,7 +60,7 @@ void test_TestSuit()
 		auto emptyCategory = ("Empty");
 		static_cast<void>(emptyCategory);
 
-		auto testB = createTest("build vec and sort",
+		auto testB = make_test("build vec and sort",
 			[](const size_t size)
 			{
 				std::vector<std::vector<int>> v(size);
@@ -89,26 +89,20 @@ void test_TestSuit()
 				throw std::exception("perform_tests() not 2 results in range 0-1");
 		}
 
-		{
-			test_suit<decltype(categoryA)> suitA(suit_configuration, categoryA);
-			test_suit<decltype(categoryA)> suitB(suit_configuration, categoryA);
-			//suitA = std::move(suitB);
-		}
-
-		auto suitA = createTestSuit(suit_configuration, categoryA);
+		auto suitA = make_test_suit(suit_configuration, categoryA);
 
 		suitA.perform_categorys(size, size);
 
-		auto categoryB = createTestCategory("container_build", testA, testB);
-		auto suitB = createTestSuit(suit_configuration, categoryA, categoryB);
+		auto categoryB = make_test_category("container_build", testA, testB);
+		auto suitB = make_test_suit(suit_configuration, categoryA, categoryB);
 		suitB.perform_categorys(0, size);
 		suitB.render_results();
 
 		// test empty category
 		auto invisibleTest = testB;
 		invisibleTest.flag_invisible();
-		auto invisibleCategory = createTestCategory("invisible Category", invisibleTest);
-		auto suitC = createTestSuit(suit_configuration, invisibleCategory, categoryA);
+		auto invisibleCategory = make_test_category("invisible Category", invisibleTest);
+		auto suitC = make_test_suit(suit_configuration, invisibleCategory, categoryA);
 		suitC.perform_categorys(0, size);
 		suitC.render_results();
 	}
