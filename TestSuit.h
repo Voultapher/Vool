@@ -502,11 +502,11 @@ template<typename T> std::vector<T> generate_container(ContainerConfig<T> config
 
 	if (config.unique)
 	{
-		if (std::is_integral<T>::value &&
-			config.upper_bound - config.lower_bound < config.size)
-		{
-			throw std::exception("container cannot be unique, given config boundarys");
-		}
+		assert(
+			!(std::is_integral<T>::value
+			&& config.upper_bound - config.lower_bound < config.size)
+			&& "container cannot be unique, given config boundarys"
+		);
 
 		std::unordered_set<T> set;
 		for (auto& element : ret)
