@@ -1,5 +1,5 @@
 /*
-* Vool - Unit tests for TestSuit, as it is highly generic, many cases wont be tested
+* Vool - Unit tests for test_suit, as it is highly generic, many cases wont be tested
 *
 * Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -23,29 +23,29 @@ namespace test
 
 void test_TestSuit()
 {
-	// test Result, Test, TestCategory and TestSuit
+	// test Result, test, test_category and test_suit
 	{
-		suit_configuration suitConfiguration;
-		suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
-		suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
-		suitConfiguration.resultName = "TST_";
-		suitConfiguration.warningsActive = true;
+		suit_config suit_configuration;
+		suit_configuration.gnuplot_path = "C:\\ProgramData\\gnuplot\\bin";
+		suit_configuration.output_filepath = "PlotResults\\PlotData\\";
+		suit_configuration.filename = "TST_";
+		suit_configuration.warnings_active = true;
 
 		size_t size = 100;
-		size_t stepCount = 50;
-		size_t repCount = 3;
+		size_t steps = 50;
+		size_t repetitions = 3;
 
 		auto testA = createTest("build vec",
 			[](const size_t size)
 			{ std::vector<int> v(size); }
 		);
 
-		auto resultTestA = testA.runTest(size, 3);
+		auto resultTestA = testA.run_test(size, 3);
 
 		auto emptyTest = createTest("Empty test", []() {});
 
 		if (resultTestA.first != size)
-			throw std::exception("createTest or runTest or getResult error");
+			throw std::exception("createTest or run_test or getResult error");
 
 		// allocating a vector of size and measuring time should not take 0 nanoseconds
 		if (!(resultTestA.second > 0))
@@ -69,55 +69,55 @@ void test_TestSuit()
 		);
 
 		{
-			auto rangeResult = categoryA.runTestRange(0, size, stepCount, repCount);
+			auto rangeResult = categoryA.perform_tests(0, size, steps, repetitions);
 			if (rangeResult.back().points().front().first != 0)
-				throw std::exception("runTestRange() first test size not 0");
+				throw std::exception("perform_tests() first test size not 0");
 
 			if (rangeResult.back().points().back().first != size)
-				throw std::exception("runTestRange() first test size not size");
+				throw std::exception("perform_tests() first test size not size");
 
-			rangeResult = categoryA.runTestRange(0, 0, stepCount, repCount);
+			rangeResult = categoryA.perform_tests(0, 0, steps, repetitions);
 			if (rangeResult.back().points().size() != 1)
-				throw std::exception("runTestRange() not 1 results in range 0-0");
+				throw std::exception("perform_tests() not 1 results in range 0-0");
 
-			rangeResult = categoryA.runTestRange(size, size, stepCount, repCount);
+			rangeResult = categoryA.perform_tests(size, size, steps, repetitions);
 			if (rangeResult.back().points().size() != 1)
-				throw std::exception("runTestRange() not 1 results in range size-size");
+				throw std::exception("perform_tests() not 1 results in range size-size");
 
-			rangeResult = categoryA.runTestRange(0, 1, stepCount, repCount);
+			rangeResult = categoryA.perform_tests(0, 1, steps, repetitions);
 			if (rangeResult.back().points().size() != 2)
-				throw std::exception("runTestRange() not 2 results in range 0-1");
+				throw std::exception("perform_tests() not 2 results in range 0-1");
 		}
 
 		{
-			TestSuit<decltype(categoryA)> suitA(suitConfiguration, categoryA);
-			TestSuit<decltype(categoryA)> suitB(suitConfiguration, categoryA);
+			test_suit<decltype(categoryA)> suitA(suit_configuration, categoryA);
+			test_suit<decltype(categoryA)> suitB(suit_configuration, categoryA);
 			//suitA = std::move(suitB);
 		}
 
-		auto suitA = createTestSuit(suitConfiguration, categoryA);
+		auto suitA = createTestSuit(suit_configuration, categoryA);
 
-		suitA.runAllTests(size, size);
+		suitA.perform_categorys(size, size);
 
 		auto categoryB = createTestCategory("container_build", testA, testB);
-		auto suitB = createTestSuit(suitConfiguration, categoryA, categoryB);
-		suitB.runAllTests(0, size);
-		suitB.renderResults();
+		auto suitB = createTestSuit(suit_configuration, categoryA, categoryB);
+		suitB.perform_categorys(0, size);
+		suitB.render_results();
 
 		// test empty category
 		auto invisibleTest = testB;
-		invisibleTest.setInvisible();
+		invisibleTest.flag_invisible();
 		auto invisibleCategory = createTestCategory("invisible Category", invisibleTest);
-		auto suitC = createTestSuit(suitConfiguration, invisibleCategory, categoryA);
-		suitC.runAllTests(0, size);
-		suitC.renderResults();
+		auto suitC = createTestSuit(suit_configuration, invisibleCategory, categoryA);
+		suitC.perform_categorys(0, size);
+		suitC.render_results();
 	}
 
-	// test generateContainer()
+	// test generate_container()
 	{
 		auto gen_test = [](const auto& config)
 		{
-			auto vec = generateContainer(config);
+			auto vec = generate_container(config);
 
 			using config_t = typename std::decay<decltype(config)>::type::type;
 
@@ -126,15 +126,15 @@ void test_TestSuit()
 				decltype(vec),
 				std::vector<config_t>
 				>::value,
-				"generateContainer() wrong return type!"
+				"generate_container() wrong return type!"
 				);
 
 			if (vec.size() != config.size)
-				throw std::exception("generateContainer() returned container with wrong size");
+				throw std::exception("generate_container() returned container with wrong size");
 
 			for (const auto& element : vec)
-				if (element < config.lowerBound || element > config.upperBound)
-					throw std::exception("generateContainer() invalid boundarys");
+				if (element < config.lower_bound || element > config.upper_bound)
+					throw std::exception("generate_container() invalid boundarys");
 
 			if (config.unique)
 			{
@@ -142,7 +142,7 @@ void test_TestSuit()
 				for (const auto& element : vec)
 				{
 					if (set.count(element) != 0)
-						throw std::exception("generateContainer() values not unique");
+						throw std::exception("generate_container() values not unique");
 					set.insert(element);
 				}
 			}
@@ -152,8 +152,8 @@ void test_TestSuit()
 		{
 			ContainerConfig<int> config;
 			config.size = 100;
-			config.lowerBound = 0;
-			config.upperBound = 1000;
+			config.lower_bound = 0;
+			config.upper_bound = 1000;
 			config.unique = true;
 			gen_test(config);
 		}
@@ -162,8 +162,8 @@ void test_TestSuit()
 		{
 			ContainerConfig<float> config;
 			config.size = 100;
-			config.lowerBound = -5.f;
-			config.upperBound = 3.f;
+			config.lower_bound = -5.f;
+			config.upper_bound = 3.f;
 
 			config.unique = false;
 			gen_test(config);

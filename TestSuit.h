@@ -30,13 +30,84 @@ namespace suithelper
 	using point_t = plot_t::point_t;
 	using graph_t = std::vector<plot_t>;
 
+	struct result_t;
+}
+
+struct suit_config;
+
+template<typename... TestCategorys> class test_suit
+{
+public:
+	using result_t = suithelper::result_t;
+
+	explicit test_suit(
+		const suit_config&,
+		TestCategorys&...
+	);
+
+	test_suit(const test_suit&) = delete;
+	test_suit(test_suit&&) = default;
+
+	test_suit& operator=(const test_suit&) = delete;
+	test_suit& operator=(test_suit&&) = default;
+
+	void perform_categorys(const size_t, const size_t);
+
+	void render_category(const result_t&);
+
+	void render_results();
+
+private:
+	std::tuple<TestCategorys...> _categorys;
+	
+	std::vector<result_t> _results;
+
+	suit_config _suit_config;
+
+	gnuplot _gnuplot;
+
+	bool valid_graph(const suithelper::graph_t&);
+
+	void pipe_result(const result_t&);
+};
+
+struct suit_config
+{
+	uint32_t x_res;
+	uint32_t y_res;
+	bool warnings_active;
+	bool png_output;
+	bool persistent;
+	size_t steps;
+	size_t repetitions;
+	std::string gnuplot_path;
+	std::string x_name;
+	std::string y_name;
+	std::string output_filepath;
+	std::string filename;
+
+	explicit suit_config()
+		: x_res(1000), y_res(500),
+		warnings_active(true),
+		png_output(true),
+		persistent(false),
+		steps(20),
+		repetitions(3),
+		gnuplot_path("C:\\ProgramData\\gnuplot\\bin"),
+		x_name("Size"), y_name("Full Time in nanoseconds"),
+		output_filepath(""), filename("Result")
+	{ }
+};
+
+namespace suithelper
+{
 	struct result_t
 	{
-		suithelper::graph_t graph;
+		graph_t graph;
 		std::string category_name;
 
 		explicit result_t(
-			suithelper::graph_t g,
+			graph_t g,
 			std::string n
 		)
 			: graph(std::move(g)), category_name(std::move(n))
@@ -48,122 +119,64 @@ namespace suithelper
 		result_t& operator= (const result_t&) = delete;
 		result_t& operator= (result_t&&) = default;
 	};
-}
 
-struct suit_configuration
-{
-	uint32_t xResolution;
-	uint32_t yResolution;
-	bool warningsActive;
-	bool pngOutput;
-	bool persistent;
-	size_t stepCount;
-	size_t repCount;
-	std::string gnuplotPath;
-	std::string xAxisName;
-	std::string yAxisName;
-	std::string resultDataPath;
-	std::string resultName;
-
-	explicit suit_configuration()
-		: xResolution(1000), yResolution(500),
-		warningsActive(true),
-		pngOutput(true),
-		persistent(false),
-		stepCount(20),
-		repCount(3),
-		gnuplotPath("C:\\ProgramData\\gnuplot\\bin"),
-		xAxisName("Size"), yAxisName("Full Time in nanoseconds"),
-		resultDataPath(""), resultName("Result") { }
-};
-
-template<typename... TestCategorys> class TestSuit
-{
-public:
-	using result_t = suithelper::result_t;
-
-	explicit TestSuit(
-		const suit_configuration&,
-		TestCategorys&...
-	);
-
-	TestSuit(const TestSuit&) = delete;
-	TestSuit(TestSuit<TestCategorys...>&&) = default;
-
-	TestSuit& operator=(TestSuit<TestCategorys...>&&) = default;
-	TestSuit& operator=(const TestSuit&) = delete;
-
-	void runAllTests(const size_t, const size_t);
-
-	void renderCategory(const result_t&);
-
-	void renderResults();
-
-private:
-	std::tuple<TestCategorys...> _categorys;
-	
-	std::vector<result_t> _results;
-
-	suit_configuration _suitConfiguration;
-
-	gnuplot _gnuplot;
-
-	bool isValidGraph(const suithelper::graph_t&);
-
-	void pipeResult(const result_t&);
-};
-
-namespace suithelper
-{
-	template<typename Func> class Test
+	template<typename Func> class test
 	{
 	public:
-		explicit Test(Func&, const std::string&);
+		explicit test(Func&, const std::string&);
 
-		void setInvisible() { _visible = false; }
+		void flag_invisible() { _visible = false; }
 
-		point_t runTest(const size_t, const size_t);
+		point_t run_test(const size_t, const size_t);
 
-		const std::string& getName() const { return _name; }
+		const std::string& name() const { return _name; }
 
-		const bool isVisible() const { return _visible; }
+		const bool visible() const { return _visible; }
 
 	private:
-		Func _testFunc;
+		Func _func;
 		std::string _name;
 		bool _visible;
 
-		inline const auto timerStart() const
+		inline const auto start_timer() const
 		{
 			return std::chrono::high_resolution_clock::now();
 		}
 
-		inline point_t timerEnd(
+		inline point_t stop_timer(
 			const std::chrono::high_resolution_clock::time_point&,
 			const size_t,
 			const size_t
 		);
 	};
 
-	template<typename... Tests> class TestCategory
+	template<typename... Tests> class test_category
 	{
 	public:
-		explicit TestCategory(const std::string& categoryName, Tests&... tests)
-			: _categoryName(categoryName), _tests(std::make_tuple(tests...))
+		explicit test_category(const std::string& categoryName, Tests&... tests)
+			: _name(categoryName), _tests(std::make_tuple(tests...))
 		{ }
 
-		graph_t runTestRange(
+		graph_t perform_tests(
 			const size_t,
 			const size_t,
 			const size_t,
 			const size_t
 		);
 
-		const std::string& name() const { return _categoryName; }
+		const std::string& name() const { return _name; }
 
 	private:
 		std::tuple<Tests...> _tests;
-		std::string _categoryName;
+		std::string _name;
+
+		using graph_plots_t = std::vector<std::pair<
+			std::vector<point_t>, std::string>
+		>;
+
+		graph_plots_t build_graph_plots(const size_t);
+
+		void benchmark_size(const size_t, const size_t, graph_plots_t&);
 	};
 }
 
@@ -172,21 +185,21 @@ template<typename T> struct ContainerConfig
 	using type = T;
 
 	size_t size; // resulting size of the container
-	T lowerBound; // lowest possible value in container
-	T upperBound; // highest possible value in container
+	T lower_bound; // lowest possible value in container
+	T upper_bound; // highest possible value in container
 	bool unique; // true should make all values unique
 
 	ContainerConfig() :
 		size(0),
-		lowerBound(std::numeric_limits<T>::min()),
-		upperBound(std::numeric_limits<T>::max()),
+		lower_bound(std::numeric_limits<T>::min()),
+		upper_bound(std::numeric_limits<T>::max()),
 		unique(true)
 	{
 		static_assert(std::is_arithmetic<T>::value, "Type T has to be arithmetic!");
 	}
 };
 
-template<typename T> std::vector<T> generateContainer(ContainerConfig<T>);
+template<typename T> std::vector<T> generate_container(ContainerConfig<T>);
 
 // ----- IMPLEMENTATION -----
 
@@ -208,94 +221,102 @@ namespace suithelper
 		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
 
-	// --- Test ---
 
-	template<typename T> Test<T>::Test(
+	// --- test ---
+
+	template<typename T> test<T>::test(
 		T& func,
 		const std::string& name
 	)
 		:
-		_testFunc(func),
+		_func(func),
 		_name(name),
 		_visible(true)
 	{ }
 
-	template<typename T> inline suithelper::point_t Test<T>::timerEnd(
+	template<typename T> inline suithelper::point_t test<T>::stop_timer(
 		const std::chrono::high_resolution_clock::time_point& start,
 		const size_t iterations,
-		const size_t repCount
+		const size_t repetitions
 	)
 	{
 		auto end = std::chrono::high_resolution_clock::now();
 
-		assert(repCount != 0 && "Repeating task 0 times!");
-		int64_t deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
-			(end - start).count() / repCount;
+		assert(repetitions != 0 && "Repeating task 0 times!");
+		int64_t delta_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+			(end - start).count() / repetitions;
 
-		return{ static_cast<int64_t>(iterations), deltaTimeNano };
+		return{ static_cast<int64_t>(iterations), delta_time };
 	}
 
-	template<typename T> suithelper::point_t Test<T>::runTest(
+	template<typename T> suithelper::point_t test<T>::run_test(
 		const size_t size,
-		const size_t repCount
+		const size_t repetitions
 	)
 	{
-		auto start = timerStart();
-		for (size_t i = 0; i < repCount; ++i)
-			_testFunc(size);
-		return timerEnd(start, size, repCount);
+		auto start = start_timer();
+		for (size_t i = 0; i < repetitions; ++i)
+			_func(size);
+		return stop_timer(start, size, repetitions);
 	}
 
-	// --- TestCategory ---
+	// --- test_category ---
 
-	template<typename... Ts> graph_t TestCategory<Ts...>::runTestRange(
-		const size_t minSize,
-		const size_t maxSize,
-		const size_t stepCount,
-		const size_t repCount
-	)
+	template<typename... Ts> auto test_category<Ts...>::build_graph_plots(
+		const size_t reserve_size
+	) -> graph_plots_t
 	{
-		std::vector<
-			std::pair<
-				std::vector<point_t>,
-				std::string
-			>
-		> graph_plots;
+		graph_plots_t graph_plots;
 
 		for_each_in_tuple(_tests,
-			[&graph_plots, stepCount](auto& test)
+			[&](auto& test)
 			{
 				graph_plots.emplace_back(
 					std::vector<point_t>{},
-					test.getName()
+					test.name()
 				);
-				graph_plots.back().first.reserve(stepCount + 2);
+				graph_plots.back().first.reserve(reserve_size);
 			}
 		);
 
-		auto runCategoryTests = [this, &graph_plots, &repCount]
-		(const size_t size)
-		{
-			auto graph_plots_it = graph_plots.begin();
+		return graph_plots;
+	}
 
-			for_each_in_tuple(_tests,
-				[&graph_plots_it, size, repCount](auto& test)
+	template<typename... Ts> void test_category<Ts...>::benchmark_size(
+		const size_t size,
+		const size_t repetitions,
+		graph_plots_t& graph_plots
+	)
+	{
+		auto graph_plots_it = graph_plots.begin();
+
+		for_each_in_tuple(_tests,
+			[&graph_plots_it, size, repetitions](auto& test)
+			{
+				auto result = test.run_test(size, repetitions);
+
+				if (test.visible())
 				{
-					auto result = test.runTest(size, repCount);
-
-					if (test.isVisible())
-					{
-						graph_plots_it->first.push_back(result);
-						++graph_plots_it;
-					}
+					graph_plots_it->first.push_back(result);
+					++graph_plots_it;
 				}
-			);
-		};
+			}
+		);
+	};
 
-		for (size_t size = minSize; size < maxSize; size += 1 + maxSize / stepCount)
-			runCategoryTests(size);
+	template<typename... Ts> graph_t test_category<Ts...>::perform_tests(
+		const size_t min,
+		const size_t max,
+		const size_t steps,
+		const size_t repetitions
+	)
+	{
+		auto graph_plots = build_graph_plots(steps + 2);
 
-		runCategoryTests(maxSize);
+		for (size_t size = min; size < max; size += 1 + max / steps)
+			benchmark_size(size, repetitions, graph_plots);
+
+		benchmark_size(max, repetitions, graph_plots);
 
 		std::sort(graph_plots.begin(), graph_plots.end(),
 			[](const auto& a, const auto& b)
@@ -306,25 +327,25 @@ namespace suithelper
 		graph_t category_graph;
 
 		std::for_each(graph_plots.begin(), graph_plots.end(),
-			[&category_graph, &index](const auto& plots)
-			{ category_graph.emplace_back(std::move(plots.first), index++, plots.second); }
+			[&category_graph, &index](const auto& plot)
+			{ category_graph.emplace_back(std::move(plot.first), index++, plot.second); }
 		);
 
 		return category_graph;
 	}
 }
 
-// --- TestSuit ---
+// --- test_suit ---
 
-template<typename... Ts> TestSuit<Ts...>::TestSuit(
-	const suit_configuration& suitConfiguration,
+template<typename... Ts> test_suit<Ts...>::test_suit(
+	const suit_config& suit_configuration,
 	Ts&... categorys
 ) :
-	_suitConfiguration(suitConfiguration),
+	_suit_config(suit_configuration),
 	_categorys(std::make_tuple(categorys...)),
-	_gnuplot(_suitConfiguration.gnuplotPath, _suitConfiguration.persistent) // may throw
+	_gnuplot(_suit_config.gnuplot_path, _suit_config.persistent) // may throw
 {
-	_gnuplot.set_terminal_window(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
+	_gnuplot.set_terminal_window(_suit_config.x_res, _suit_config.y_res);
 
 	_gnuplot << "set samples 500";
 	_gnuplot.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
@@ -333,37 +354,37 @@ template<typename... Ts> TestSuit<Ts...>::TestSuit(
 	_gnuplot.add_linestyle(4, "#E8803A", 2, 3, 8, 1.5f);
 	_gnuplot.add_linestyle(5, "#46E86C", 2, 3, 9, 1.5f);
 	_gnuplot.add_grid();
-	_gnuplot.name_axis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
+	_gnuplot.name_axis(_suit_config.x_name, _suit_config.y_name);
 }
 
-template<typename... Ts> void TestSuit<Ts...>::runAllTests(
-	const size_t minSize,
-	const size_t maxSize
+template<typename... Ts> void test_suit<Ts...>::perform_categorys(
+	const size_t min,
+	const size_t max
 )
 {
-	if (maxSize == 0 || maxSize < minSize)
+	if (max == 0 || max < min)
 		return;
 
 	_results.clear();
 
 	suithelper::for_each_in_tuple(_categorys,
 		[
-			minSize,
-			maxSize,
+			min,
+			max,
 			&results = _results,
-			stepCount = _suitConfiguration.stepCount,
-			repCount = _suitConfiguration.repCount
+			steps = _suit_config.steps,
+			repetitions = _suit_config.repetitions
 		](auto& category)
 		{
 			results.emplace_back(
-				category.runTestRange(minSize, maxSize, stepCount, repCount),
+				category.perform_tests(min, max, steps, repetitions),
 				category.name()
 			);
 		}
 	);
 }
 
-template<typename... Ts> bool TestSuit<Ts...>::isValidGraph(
+template<typename... Ts> bool test_suit<Ts...>::valid_graph(
 	const suithelper::graph_t& graph
 )
 {
@@ -378,40 +399,36 @@ template<typename... Ts> bool TestSuit<Ts...>::isValidGraph(
 	return true;
 }
 
-template<typename... Ts> void TestSuit<Ts...>::pipeResult(
+template<typename... Ts> void test_suit<Ts...>::pipe_result(
 	const result_t& result
 )
 {
-	// if there are results, write them to a .dat file
 	if (result.graph.size() == 0)
 		return;
 
 	_gnuplot.write_and_plot(
 		result.graph,
-		_suitConfiguration.resultDataPath + result.category_name + ".dat");
+		_suit_config.output_filepath + result.category_name + ".dat");
 
-	if (_suitConfiguration.pngOutput)
+	if (_suit_config.png_output)
 	{
-		// tell gnuplot to create a .png
-		_gnuplot.set_terminal_png(
-			_suitConfiguration.xResolution,
-			_suitConfiguration.yResolution);
-		_gnuplot.set_png_filename(_suitConfiguration.resultName + result.category_name);
+		_gnuplot.set_terminal_png(_suit_config.x_res, _suit_config.y_res);
+		_gnuplot.set_png_filename(_suit_config.filename + result.category_name);
 		_gnuplot.plot(
 			result.graph,
-			_suitConfiguration.resultDataPath + result.category_name + ".dat");
+			_suit_config.output_filepath + result.category_name + ".dat");
 	}
 }
 
-template<typename... Ts> void TestSuit<Ts...>::renderCategory(
+template<typename... Ts> void test_suit<Ts...>::render_category(
 	const result_t& result
 )
 {
-	if (isValidGraph(result.graph))
+	if (valid_graph(result.graph))
 	{
-		pipeResult(result);
+		pipe_result(result);
 	}
-	else if (_suitConfiguration.warningsActive)
+	else if (_suit_config.warnings_active)
 	{
 		std::cout
 			<< "The category: \""
@@ -420,15 +437,15 @@ template<typename... Ts> void TestSuit<Ts...>::renderCategory(
 	}
 }
 
-template<typename... Ts> void TestSuit<Ts...>::renderResults()
+template<typename... Ts> void test_suit<Ts...>::render_results()
 {
 	for (const auto& result : _results)
 	{
 		if (result.graph.size() > 0)
 		{
-			renderCategory(result);
+			render_category(result);
 		}
-		else if (_suitConfiguration.warningsActive)
+		else if (_suit_config.warnings_active)
 		{
 			std::cout
 				<< "The category: \""
@@ -440,30 +457,30 @@ template<typename... Ts> void TestSuit<Ts...>::renderResults()
 
 // --- make funcitons ---
 
-template<typename T> suithelper::Test<T> createTest(
+template<typename T> suithelper::test<T> createTest(
 	const std::string& testName, T func
 )
 {
-	return suithelper::Test<T>(std::ref(func), testName);
+	return suithelper::test<T>(std::ref(func), testName);
 }
 
-template<typename... Ts> suithelper::TestCategory<Ts...>createTestCategory(
+template<typename... Ts> suithelper::test_category<Ts...>createTestCategory(
 	const std::string& categoryName, Ts&... tests
 )
 {
-	return suithelper::TestCategory<Ts...>(categoryName, tests...);
+	return suithelper::test_category<Ts...>(categoryName, tests...);
 }
 
-template <typename... Ts> TestSuit<Ts...> createTestSuit(
-	const suit_configuration& suitConfiguration, Ts&... categorys
+template <typename... Ts> test_suit<Ts...> createTestSuit(
+	const suit_config& suit_configuration, Ts&... categorys
 )
 {
-	return TestSuit<Ts...>(suitConfiguration, categorys...);
+	return test_suit<Ts...>(suit_configuration, categorys...);
 }
 
-// --- generateContainer ---
+// --- generate_container ---
 
-template<typename T> std::vector<T> generateContainer(ContainerConfig<T> config)
+template<typename T> std::vector<T> generate_container(ContainerConfig<T> config)
 {
 	static_assert(std::is_arithmetic<T>::value, "Type T has to be arithmetic!");
 
@@ -477,12 +494,12 @@ template<typename T> std::vector<T> generateContainer(ContainerConfig<T> config)
 
 	std::mt19937_64 generator(1580); // fixed seed for reproducibility
 
-	distribution_t distribution(config.lowerBound, config.upperBound);
+	distribution_t distribution(config.lower_bound, config.upper_bound);
 
 	if (config.unique)
 	{
 		if (std::is_integral<T>::value &&
-			config.upperBound - config.lowerBound < config.size)
+			config.upper_bound - config.lower_bound < config.size)
 		{
 			throw std::exception("container cannot be unique, given config boundarys");
 		}
