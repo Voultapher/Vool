@@ -39,7 +39,7 @@ void test_Vecmap()
 			vool::vec_map_util::Bucket<K, V, true>
 		>::value, "vec_map bucket selection fail!");
 
-	// Test
+
 	V value; // custom value type
 	value.sampleArray[0] = 33;
 
