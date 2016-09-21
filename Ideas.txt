@@ -5,6 +5,7 @@ TestSuit:
 Clean up createTestSuit with std::optional, as it may throw
 Use Cmake as build system and let it search for gnuplot path and make it a define
 replace vector with std::array
+Inject invisible task infront of every category to compensate for cache warmup
 
 Vecmap:
 Expose the ability to use custom allocator

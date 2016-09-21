@@ -1,5 +1,5 @@
 /*
-* Vool - Generic perfomance test suit using GNP to visualize results
+* Vool - Generic benchmark test suit using GNP to visualize results
 *
 * Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <string>
 #include <tuple>
+#include <cassert>
 
 #include <chrono>
 #include <random>
@@ -23,101 +24,33 @@
 namespace vool
 {
 
-struct Result
+namespace suithelper
 {
-public:
-	Result(const size_t size, const int64_t fT, const int64_t aT, const std::string& tN) :
-		_size(size), _fullTime(fT), _averageTime(aT), _taskName(tN)
-	{ }
+	using plot_t = plot_data_2D<int64_t>;
+	using point_t = plot_t::point_t;
+	using graph_t = std::vector<plot_t>;
 
-	const size_t getSize() const { return _size; }
-	const int64_t getFullTime() const { return _fullTime; }
-	const int64_t getAverageTime() const { return _averageTime; }
-	const std::string& getTaskName() const { return _taskName; }
-
-private:
-	size_t _size;
-	int64_t _fullTime;
-	int64_t _averageTime;
-	std::string _taskName;
-};
-
-template<typename TestFunc> class Test
-{
-public:
-	explicit Test(TestFunc& func, const std::string& testName)
-		:
-		_testFunc(func),
-		_testName(testName),
-		_result(0, 0, 0, "No Test"),
-		_visible(true)
-	{ }
-
-	void setInvisible() { _visible = false; }
-
-	void runTest(const size_t, const size_t);
-
-	const bool isVisible() const { return _visible; }
-	const Result& getResult() const { return _result; }
-
-private:
-	TestFunc _testFunc;
-	Result _result;
-	std::string _testName;
-	bool _visible;
-
-	inline const auto timerStart() const
+	struct result_t
 	{
-		return std::chrono::high_resolution_clock::now();
-	}
+		suithelper::graph_t graph;
+		std::string category_name;
 
-	inline void timerEnd(
-		const std::chrono::high_resolution_clock::time_point& start,
-		const size_t iterations,
-		const size_t repCount
-	);
-};
+		explicit result_t(
+			suithelper::graph_t g,
+			std::string n
+		)
+			: graph(std::move(g)), category_name(std::move(n))
+		{ }
 
-template<typename Func>
-Test<Func> createTest(const std::string& testName, Func func)
-{
-	return Test<Func>(std::ref(func), testName);
-}
+		result_t(const result_t&) = delete;
+		result_t(result_t&&) = default;
 
-template<typename... Tests> class TestCategory
-{
-public:
-	using res_t = std::vector<std::vector<Result>>;
-
-	explicit TestCategory(const std::string& categoryName, Tests&... tests)
-		: _categoryName(categoryName), _tests(std::make_tuple(tests...))
-	{ }
-
-	void runTestRange(
-		const size_t,
-		const size_t,
-		const size_t,
-		const size_t
-	);
-
-	const std::pair<res_t, std::string> getResults() const
-	{
-		return std::make_pair(_results, _categoryName);
+		result_t& operator= (const result_t&) = delete;
+		result_t& operator= (result_t&&) = default;
 	};
-
-private:
-	std::tuple<Tests...> _tests;
-	res_t _results;
-	std::string _categoryName;
-};
-
-template<typename... Tests> TestCategory<Tests...>
-createTestCategory (const std::string& categoryName, Tests&... tests)
-{
-	return TestCategory<Tests...>(categoryName, tests...);
 }
 
-struct SuitConfiguration
+struct suit_configuration
 {
 	uint32_t xResolution;
 	uint32_t yResolution;
@@ -132,7 +65,7 @@ struct SuitConfiguration
 	std::string resultDataPath;
 	std::string resultName;
 
-	explicit SuitConfiguration()
+	explicit suit_configuration()
 		: xResolution(1000), yResolution(500),
 		warningsActive(true),
 		pngOutput(true),
@@ -144,61 +77,94 @@ struct SuitConfiguration
 		resultDataPath(""), resultName("Result") { }
 };
 
-
 template<typename... TestCategorys> class TestSuit
 {
 public:
-	using plots_t = std::vector<plot_data_2D<double>>;
-	using category_res_t = std::pair<std::vector<std::vector<Result>>, std::string>;
-	using res_t = std::vector<category_res_t>;
+	using result_t = suithelper::result_t;
 
-	// constructor
 	explicit TestSuit(
-		const SuitConfiguration&,
+		const suit_configuration&,
 		TestCategorys&...
 	);
 
-	// move constructor
-	TestSuit(TestSuit<TestCategorys...>&& other) = default;
+	TestSuit(const TestSuit&) = delete;
+	TestSuit(TestSuit<TestCategorys...>&&) = default;
 
-	// move operator
-	TestSuit& operator=(TestSuit<TestCategorys...>&& other) = default;
-
-	// no copy constructor
-	TestSuit(const TestSuit& other) = delete;
-
-	// no copy operator
-	TestSuit& operator=(const TestSuit& other) = delete;
+	TestSuit& operator=(TestSuit<TestCategorys...>&&) = default;
+	TestSuit& operator=(const TestSuit&) = delete;
 
 	void runAllTests(const size_t, const size_t);
 
-	void renderCategory(const category_res_t&);
+	void renderCategory(const result_t&);
 
 	void renderResults();
 
-	const res_t& getResults() const { return _results; }
-
 private:
 	std::tuple<TestCategorys...> _categorys;
-	res_t _results;
+	
+	std::vector<result_t> _results;
 
-	SuitConfiguration _suitConfiguration;
+	suit_configuration _suitConfiguration;
 
-	gnuplot _plot;
+	gnuplot _gnuplot;
 
-	plots_t createPlots(const category_res_t&);
+	bool isValidGraph(const suithelper::graph_t&);
 
-	bool areValidPlots(const plots_t&);
-
-	void sortResult(plots_t&);
-
-	void pipeResult(const plots_t&, const std::string&);
+	void pipeResult(const result_t&);
 };
 
-template <typename... Ts> TestSuit<Ts...>
-createTestSuit(const SuitConfiguration& suitConfiguration, Ts&... categorys)
+namespace suithelper
 {
-	return TestSuit<Ts...>(suitConfiguration, categorys...);
+	template<typename Func> class Test
+	{
+	public:
+		explicit Test(Func&, const std::string&);
+
+		void setInvisible() { _visible = false; }
+
+		point_t runTest(const size_t, const size_t);
+
+		const std::string& getName() const { return _name; }
+
+		const bool isVisible() const { return _visible; }
+
+	private:
+		Func _testFunc;
+		std::string _name;
+		bool _visible;
+
+		inline const auto timerStart() const
+		{
+			return std::chrono::high_resolution_clock::now();
+		}
+
+		inline point_t timerEnd(
+			const std::chrono::high_resolution_clock::time_point&,
+			const size_t,
+			const size_t
+		);
+	};
+
+	template<typename... Tests> class TestCategory
+	{
+	public:
+		explicit TestCategory(const std::string& categoryName, Tests&... tests)
+			: _categoryName(categoryName), _tests(std::make_tuple(tests...))
+		{ }
+
+		graph_t runTestRange(
+			const size_t,
+			const size_t,
+			const size_t,
+			const size_t
+		);
+
+		const std::string& name() const { return _categoryName; }
+
+	private:
+		std::tuple<Tests...> _tests;
+		std::string _categoryName;
+	};
 }
 
 template<typename T> struct ContainerConfig
@@ -220,7 +186,7 @@ template<typename T> struct ContainerConfig
 	}
 };
 
-template<typename T> std::vector<T> generateContainer(ContainerConfig<T> config);
+template<typename T> std::vector<T> generateContainer(ContainerConfig<T>);
 
 // ----- IMPLEMENTATION -----
 
@@ -241,259 +207,261 @@ namespace suithelper
 		// call for_each_in_tuple with the constructed index_sequence
 		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
 	}
-}
 
-// --- Test ---
+	// --- Test ---
 
-template<typename T> inline void Test<T>::timerEnd(
-	const std::chrono::high_resolution_clock::time_point& start,
-	const size_t iterations,
-	const size_t repCount
-)
-{
-	auto end = std::chrono::high_resolution_clock::now(); // save end time
+	template<typename T> Test<T>::Test(
+		T& func,
+		const std::string& name
+	)
+		:
+		_testFunc(func),
+		_name(name),
+		_visible(true)
+	{ }
 
-	int64_t deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
-		(end - start).count() / repCount; // calculate difference in nanosecons
-
-											// calculate how long each iteration took on average
-	int64_t averageIndividualTime = deltaTimeNano / iterations;
-
-	_result = std::move(Result(iterations, deltaTimeNano, averageIndividualTime, _testName));
-}
-
-template<typename T> void Test<T>::runTest(const size_t size, const size_t repCount)
-{
-	auto start = timerStart();
-	for (size_t i = 0; i < repCount; ++i)
-		_testFunc(size);
-	timerEnd(start, size, repCount);
-}
-
-// --- TestCategory ---
-
-template<typename... Tests> void TestCategory<Tests...>::runTestRange(
-	const size_t minSize,
-	const size_t maxSize,
-	const size_t stepCount,
-	const size_t repCount
-)
-{
-	// all test will be executed in construction order
-
-	// size construct to fit the amount of tests
-	std::vector<std::vector<Result>> categoryResults(sizeof...(Tests));
-
-	auto runCategoryTests = [this, &categoryResults, &repCount]
-	(const size_t size)
+	template<typename T> inline suithelper::point_t Test<T>::timerEnd(
+		const std::chrono::high_resolution_clock::time_point& start,
+		const size_t iterations,
+		const size_t repCount
+	)
 	{
-		auto categoryResults_it = categoryResults.begin();
+		auto end = std::chrono::high_resolution_clock::now();
 
-		suithelper::for_each_in_tuple(_tests,
-			[&categoryResults_it, size, repCount, &categoryResults](auto& element)
-		{
-			element.runTest(size, repCount);
+		assert(repCount != 0 && "Repeating task 0 times!");
+		int64_t deltaTimeNano = std::chrono::duration_cast<std::chrono::nanoseconds>
+			(end - start).count() / repCount;
 
-			if (element.isVisible())
+		return{ static_cast<int64_t>(iterations), deltaTimeNano };
+	}
+
+	template<typename T> suithelper::point_t Test<T>::runTest(
+		const size_t size,
+		const size_t repCount
+	)
+	{
+		auto start = timerStart();
+		for (size_t i = 0; i < repCount; ++i)
+			_testFunc(size);
+		return timerEnd(start, size, repCount);
+	}
+
+	// --- TestCategory ---
+
+	template<typename... Ts> graph_t TestCategory<Ts...>::runTestRange(
+		const size_t minSize,
+		const size_t maxSize,
+		const size_t stepCount,
+		const size_t repCount
+	)
+	{
+		std::vector<
+			std::pair<
+				std::vector<point_t>,
+				std::string
+			>
+		> graph_plots;
+
+		for_each_in_tuple(_tests,
+			[&graph_plots, stepCount](auto& test)
 			{
-				categoryResults_it->push_back(element.getResult());
-				++categoryResults_it;
+				graph_plots.emplace_back(
+					std::vector<point_t>{},
+					test.getName()
+				);
+				graph_plots.back().first.reserve(stepCount + 2);
 			}
-		}
 		);
-	};
 
+		auto runCategoryTests = [this, &graph_plots, &repCount]
+		(const size_t size)
+		{
+			auto graph_plots_it = graph_plots.begin();
 
-	size_t size = minSize == 0 ? 1 : minSize;
-	for (; size < maxSize; size += 1 + maxSize / stepCount)
-		runCategoryTests(size);
+			for_each_in_tuple(_tests,
+				[&graph_plots_it, size, repCount](auto& test)
+				{
+					auto result = test.runTest(size, repCount);
 
-	runCategoryTests(maxSize);
+					if (test.isVisible())
+					{
+						graph_plots_it->first.push_back(result);
+						++graph_plots_it;
+					}
+				}
+			);
+		};
 
-	categoryResults.shrink_to_fit();
+		for (size_t size = minSize; size < maxSize; size += 1 + maxSize / stepCount)
+			runCategoryTests(size);
 
-	_results = std::move(categoryResults);
+		runCategoryTests(maxSize);
+
+		std::sort(graph_plots.begin(), graph_plots.end(),
+			[](const auto& a, const auto& b)
+			{ return a.first.back().second > b.first.back().second; }
+		);
+
+		uint32_t index = {};
+		graph_t category_graph;
+
+		std::for_each(graph_plots.begin(), graph_plots.end(),
+			[&category_graph, &index](const auto& plots)
+			{ category_graph.emplace_back(std::move(plots.first), index++, plots.second); }
+		);
+
+		return category_graph;
+	}
 }
 
 // --- TestSuit ---
 
-template<typename... TestCategorys> TestSuit<TestCategorys...>::TestSuit(
-	const SuitConfiguration& suitConfiguration,
-	TestCategorys&... categorys
+template<typename... Ts> TestSuit<Ts...>::TestSuit(
+	const suit_configuration& suitConfiguration,
+	Ts&... categorys
 ) :
 	_suitConfiguration(suitConfiguration),
 	_categorys(std::make_tuple(categorys...)),
-	_plot(_suitConfiguration.gnuplotPath, _suitConfiguration.persistent) // may throw
+	_gnuplot(_suitConfiguration.gnuplotPath, _suitConfiguration.persistent) // may throw
 {
-	_plot.set_terminal_window(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
+	_gnuplot.set_terminal_window(_suitConfiguration.xResolution, _suitConfiguration.yResolution);
 
-	_plot << "set samples 500";
-	_plot.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
-	_plot.add_linestyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
-	_plot.add_linestyle(3, "#9871FF", 2, 3, 7, 1.5f);
-	_plot.add_linestyle(4, "#E8803A", 2, 3, 8, 1.5f);
-	_plot.add_linestyle(5, "#46E86C", 2, 3, 9, 1.5f);
-	_plot.add_grid();
-	_plot.name_axis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
+	_gnuplot << "set samples 500";
+	_gnuplot.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+	_gnuplot.add_linestyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
+	_gnuplot.add_linestyle(3, "#9871FF", 2, 3, 7, 1.5f);
+	_gnuplot.add_linestyle(4, "#E8803A", 2, 3, 8, 1.5f);
+	_gnuplot.add_linestyle(5, "#46E86C", 2, 3, 9, 1.5f);
+	_gnuplot.add_grid();
+	_gnuplot.name_axis(_suitConfiguration.xAxisName, _suitConfiguration.yAxisName);
 }
 
-template<typename... TestCategorys> void TestSuit<TestCategorys...>::runAllTests(
+template<typename... Ts> void TestSuit<Ts...>::runAllTests(
 	const size_t minSize,
 	const size_t maxSize
 )
 {
-	// all test will be executed in construction order
-
 	if (maxSize == 0 || maxSize < minSize)
 		return;
 
 	_results.clear();
-	auto& categoryResults = _results;
 
-	// for every category
 	suithelper::for_each_in_tuple(_categorys,
 		[
 			minSize,
 			maxSize,
-			&categoryResults,
+			&results = _results,
 			stepCount = _suitConfiguration.stepCount,
 			repCount = _suitConfiguration.repCount
-		](auto& element)
-	{
-		element.runTestRange(minSize, maxSize, stepCount, repCount);
-		categoryResults.push_back(element.getResults());
-	});
-}
-
-template<typename... TestCategorys> auto TestSuit<TestCategorys...>::createPlots(
-	const category_res_t& category_res
-) -> plots_t
-{
-	plots_t plots;
-	plots.reserve(category_res.first.size());
-
-	for (const auto& results : category_res.first)
-	{
-		if (results.size() == 0)
-			continue;
-
-		std::vector<std::pair<double, double>> points;
-		points.reserve(results.size());
-		for (const auto& result : results)
-			points.push_back
-			(
-				std::make_pair(
-					result.getSize(),
-					result.getFullTime())
+		](auto& category)
+		{
+			results.emplace_back(
+				category.runTestRange(minSize, maxSize, stepCount, repCount),
+				category.name()
 			);
-
-		plots.emplace_back
-		(
-			std::move(points),
-			results.back().getTaskName()
-		);
-	}
-
-	return plots;
+		}
+	);
 }
 
-template<typename... TestCategorys> bool TestSuit<TestCategorys...>::areValidPlots(
-	const plots_t& plots
+template<typename... Ts> bool TestSuit<Ts...>::isValidGraph(
+	const suithelper::graph_t& graph
 )
 {
-	if (plots.size() == 0)
+	if (graph.size() == 0)
 		return false;
 
-	size_t plotSize = plots.back().points().size();
-	for (const auto& plot : plots)
+	size_t plotSize = graph.back().points().size();
+	for (const auto& plot : graph)
 		if (plot.points().size() == 0 || plot.points().size() != plotSize)
 			return false;
 
 	return true;
 }
 
-template<typename... TestCategorys> void TestSuit<TestCategorys...>::sortResult(
-	plots_t& plots
-)
-{
-	// sort test results top to bottom
-	std::sort(plots.begin(), plots.end(),
-		[](const auto& pointsA, const auto& pointsB)
-	{
-		return pointsA.points().back() > pointsB.points().back();
-	});
-
-	for (size_t i = 0; i < plots.size(); ++i)
-	{
-		plots[i].set_index_and_linestyle(
-			static_cast<uint32_t>(i),
-			static_cast<uint32_t>(i) + 1
-		);
-	}
-}
-
-template<typename... TestCategorys> void TestSuit<TestCategorys...>::pipeResult(
-	const plots_t& plots,
-	const std::string& categoryName
+template<typename... Ts> void TestSuit<Ts...>::pipeResult(
+	const result_t& result
 )
 {
 	// if there are results, write them to a .dat file
-	if (plots.size() == 0)
+	if (result.graph.size() == 0)
 		return;
 
-	_plot.write_and_plot(
-		plots,
-		_suitConfiguration.resultDataPath + categoryName + ".dat");
+	_gnuplot.write_and_plot(
+		result.graph,
+		_suitConfiguration.resultDataPath + result.category_name + ".dat");
 
 	if (_suitConfiguration.pngOutput)
 	{
-		// tell gnu_plot to create a .png
-		_plot.set_terminal_png(
+		// tell gnuplot to create a .png
+		_gnuplot.set_terminal_png(
 			_suitConfiguration.xResolution,
 			_suitConfiguration.yResolution);
-		_plot.set_png_filename(_suitConfiguration.resultName + categoryName);
-		_plot.plot(
-			plots,
-			_suitConfiguration.resultDataPath + categoryName + ".dat");
+		_gnuplot.set_png_filename(_suitConfiguration.resultName + result.category_name);
+		_gnuplot.plot(
+			result.graph,
+			_suitConfiguration.resultDataPath + result.category_name + ".dat");
 	}
 }
 
-template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderCategory(
-	const category_res_t& category_res
+template<typename... Ts> void TestSuit<Ts...>::renderCategory(
+	const result_t& result
 )
 {
-	auto plots = createPlots(category_res);
-
-	if (areValidPlots(plots))
+	if (isValidGraph(result.graph))
 	{
-		sortResult(plots);
-		pipeResult(plots, category_res.second);
+		pipeResult(result);
 	}
 	else if (_suitConfiguration.warningsActive)
 	{
 		std::cout
 			<< "The category: \""
-			<< category_res.second
+			<< result.category_name
 			<< "\" had invalid plots!\n";
 	}
 }
 
-template<typename... TestCategorys> void TestSuit<TestCategorys...>::renderResults()
+template<typename... Ts> void TestSuit<Ts...>::renderResults()
 {
-	for (const auto& category_res : _results)
-		if (category_res.first.size() == 0)
+	for (const auto& result : _results)
+	{
+		if (result.graph.size() > 0)
 		{
-			if (_suitConfiguration.warningsActive)
-				std::cout
-					<< "The category: \""
-					<< category_res.second
-					<< "\" had 0 results!\n";
+			renderCategory(result);
 		}
-		else
-			renderCategory(category_res);
+		else if (_suitConfiguration.warningsActive)
+		{
+			std::cout
+				<< "The category: \""
+				<< result.category_name
+				<< "\" had 0 plots!\n";
+		}
+	}
 }
 
-// --- else ---
+// --- make funcitons ---
+
+template<typename T> suithelper::Test<T> createTest(
+	const std::string& testName, T func
+)
+{
+	return suithelper::Test<T>(std::ref(func), testName);
+}
+
+template<typename... Ts> suithelper::TestCategory<Ts...>createTestCategory(
+	const std::string& categoryName, Ts&... tests
+)
+{
+	return suithelper::TestCategory<Ts...>(categoryName, tests...);
+}
+
+template <typename... Ts> TestSuit<Ts...> createTestSuit(
+	const suit_configuration& suitConfiguration, Ts&... categorys
+)
+{
+	return TestSuit<Ts...>(suitConfiguration, categorys...);
+}
+
+// --- generateContainer ---
 
 template<typename T> std::vector<T> generateContainer(ContainerConfig<T> config)
 {

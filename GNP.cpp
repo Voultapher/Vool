@@ -19,7 +19,7 @@
 namespace vool
 {
 
-gnuplot::gnuplot(std::string gnuplot_path, bool persist)
+gnuplot::gnuplot(std::string gnuplot_path, const bool persist)
 {
 	gnuplot_path += persist ? "\\gnuplot -persist" : "\\gnuplot";
 	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
@@ -85,7 +85,7 @@ void gnuplot::set_terminal_png(
 )
 {
 	operator()(
-		"set terminal pngcairo enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
+		"set terminal pngcairo enhanced font 'Verdana,12' background rgb '#FCFCFC' size ",
 		horizontal_res, ", ", vertical_res
 	);
 }
@@ -96,7 +96,7 @@ void gnuplot::set_terminal_window(
 )
 {
 	operator()(
-		"set terminal wxt enhanced font 'Verdana,10' background rgb '#FCFCFC' size ",
+		"set terminal wxt enhanced font 'Verdana,12' background rgb '#FCFCFC' size ",
 		horizontal_res, ", ", vertical_res
 	);
 }

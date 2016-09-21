@@ -25,45 +25,69 @@ void test_TestSuit()
 {
 	// test Result, Test, TestCategory and TestSuit
 	{
-		SuitConfiguration suitConfiguration;
-		suitConfiguration.warningsActive = false;
+		suit_configuration suitConfiguration;
 		suitConfiguration.gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
 		suitConfiguration.resultDataPath = "PlotResults\\PlotData\\";
 		suitConfiguration.resultName = "TST_";
-
-
-		Result resultA(2, 100, 60, "Simple Result");
-		if (resultA.getSize() != 2)
-			throw std::exception("Result construction or getSize() failed");
+		suitConfiguration.warningsActive = true;
 
 		size_t size = 100;
-		auto testA = createTest("Build vec", [](const size_t size) {std::vector<int> v(size); });
-		testA.runTest(size, 3);
-		auto resultTestA = testA.getResult();
+		size_t stepCount = 50;
+		size_t repCount = 3;
+
+		auto testA = createTest("build vec",
+			[](const size_t size)
+			{ std::vector<int> v(size); }
+		);
+
+		auto resultTestA = testA.runTest(size, 3);
 
 		auto emptyTest = createTest("Empty test", []() {});
 
-		if (resultTestA.getSize() != size)
+		if (resultTestA.first != size)
 			throw std::exception("createTest or runTest or getResult error");
 
 		// allocating a vector of size and measuring time should not take 0 nanoseconds
-		if (!(resultTestA.getFullTime() > 0))
+		if (!(resultTestA.second > 0))
 			throw std::exception("Full test time was 0 nanoseconds");
 
-		auto categoryA = createTestCategory("Test_category_A", testA);
-		categoryA.runTestRange(0, size, 50, 3);
-		auto resultCategoryA = categoryA.getResults();
+		const char* nameA = "Test_category_A";
+		auto categoryA = createTestCategory(nameA, testA);
 
-		if (resultCategoryA.second != "Test_category_A")
+		if (categoryA.name() != nameA)
 			throw std::exception("category name set or get error");
-		if (resultCategoryA.first.back().back().getSize() > size)
-			throw std::exception("category range test error");
 
 		auto emptyCategory = ("Empty");
 		static_cast<void>(emptyCategory);
 
-		auto testB = createTest("Build 2D vector", [](const size_t size)
-		{ std::vector<std::vector<int>> v(size); });
+		auto testB = createTest("build vec and sort",
+			[](const size_t size)
+			{
+				std::vector<std::vector<int>> v(size);
+				std::sort(v.begin(), v.end());
+			}
+		);
+
+		{
+			auto rangeResult = categoryA.runTestRange(0, size, stepCount, repCount);
+			if (rangeResult.back().points().front().first != 0)
+				throw std::exception("runTestRange() first test size not 0");
+
+			if (rangeResult.back().points().back().first != size)
+				throw std::exception("runTestRange() first test size not size");
+
+			rangeResult = categoryA.runTestRange(0, 0, stepCount, repCount);
+			if (rangeResult.back().points().size() != 1)
+				throw std::exception("runTestRange() not 1 results in range 0-0");
+
+			rangeResult = categoryA.runTestRange(size, size, stepCount, repCount);
+			if (rangeResult.back().points().size() != 1)
+				throw std::exception("runTestRange() not 1 results in range size-size");
+
+			rangeResult = categoryA.runTestRange(0, 1, stepCount, repCount);
+			if (rangeResult.back().points().size() != 2)
+				throw std::exception("runTestRange() not 2 results in range 0-1");
+		}
 
 		{
 			TestSuit<decltype(categoryA)> suitA(suitConfiguration, categoryA);
@@ -73,23 +97,7 @@ void test_TestSuit()
 
 		auto suitA = createTestSuit(suitConfiguration, categoryA);
 
-		suitA.runAllTests(0, size);
-		auto resultSuitA = suitA.getResults();
-		if (resultSuitA.front().first.back().back().getSize() > size)
-			throw std::exception("runAllTests or getResults error");
-
-		suitA.runAllTests(0, 0);
-		suitA.runAllTests(0, 1);
-		resultSuitA = suitA.getResults();
-		if (resultSuitA.front().first.back().back().getSize() != 1)
-			throw std::exception("runAllTests error, range fault");
-
 		suitA.runAllTests(size, size);
-		resultSuitA = suitA.getResults();
-		if (resultSuitA.front().first.back().back().getSize() != size)
-			throw std::exception("runAllTests error, range fault");
-		if (resultSuitA.front().first.back().size() != 1) // there should only be one result
-			throw std::exception("runAllTests error, range fault");
 
 		auto categoryB = createTestCategory("container_build", testA, testB);
 		auto suitB = createTestSuit(suitConfiguration, categoryA, categoryB);

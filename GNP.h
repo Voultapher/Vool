@@ -19,19 +19,13 @@ namespace vool
 template<typename T> struct plot_data_2D
 {
 public:
-	explicit plot_data_2D(
-		const std::vector<std::pair<T, T>>,
-		const std::string&
-	);
+	using point_t = std::pair<T, T>; // first = x second = y
 
 	explicit plot_data_2D(
-		const std::vector<std::pair<T, T>>,
-		const uint32_t,
+		const std::vector<point_t>,
 		const uint32_t,
 		const std::string&
 	);
-
-	void set_index_and_linestyle(const uint32_t index, const uint32_t linestyle);
 
 	const auto& points() const { return _points; }
 	const auto linestyle() const { return _linestyle; }
@@ -39,7 +33,7 @@ public:
 	const auto& name() const { return _name; }
 
 private:
-	std::vector<std::pair<T, T>> _points;
+	std::vector<point_t> _points;
 	uint32_t _linestyle;
 	uint32_t _index;
 	std::string _name;
@@ -48,7 +42,7 @@ private:
 class gnuplot
 {
 public:
-	explicit gnuplot(std::string, bool = true);
+	explicit gnuplot(std::string, const bool = true);
 
 	gnuplot(gnuplot&&);
 
@@ -117,8 +111,6 @@ namespace util
 	// overload if T is not an string or const char*
 	template<typename T> std::string convert(const T& arg)
 	{
-		static_assert(!std::is_same<T, const char*>::value, "const char* buhu!");
-		static_assert(!std::is_same<T, std::string>::value, "string buhu!");
 		return std::to_string(arg);
 	}
 
@@ -137,19 +129,11 @@ namespace util
 // --- plot_data_2D ---
 
 template<typename T> plot_data_2D<T>::plot_data_2D(
-	const std::vector<std::pair<T, T>> points,
-	const std::string& name
-)
-	:_points(points), _name(name)
-{ }
-
-template<typename T> plot_data_2D<T>::plot_data_2D(
-	const std::vector<std::pair<T, T>> points,
-	const uint32_t linestyle,
+	const std::vector<point_t> points,
 	const uint32_t index,
 	const std::string& name
 )
-	: _points(points), _linestyle(linestyle), _index(index), _name(name)
+	: _points(points), _linestyle(index + 1), _index(index), _name(name)
 { }
 
 // --- gnuplot ---
@@ -162,15 +146,6 @@ template<typename... Ts> void gnuplot::operator() (const Ts&... args)
 
 	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
 	fflush(_gnuplot_pipe);
-}
-
-template<typename T> void plot_data_2D<T>::set_index_and_linestyle(
-	const uint32_t index,
-	const uint32_t linestyle
-)
-{
-	_index = index;
-	_linestyle = linestyle;
 }
 
 template<typename T> void gnuplot::write_and_plot(

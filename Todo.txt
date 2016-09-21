@@ -8,9 +8,12 @@ x86-64 gurantes that reading an int while writing should not corrupt the data, t
 hold true for every platform, nor unaligned types.
 
 TestSuit:
-Reduce the duplication of work and clean up renderResults()
+Make it moveable
 
 Vecmap:
 Check if using an unordered_map under with size_t as key and value as value,
 and storing the key in Bucket instead of a pointer is beneficial.
 There may be a memory leak.
+
+
+REMOVE parameter names from default constructors
