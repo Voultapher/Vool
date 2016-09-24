@@ -11,6 +11,7 @@
 
 # top level folder file exclude
 /*.png
+/*.config
 
 # plot results
 PlotResults/
