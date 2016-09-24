@@ -36,7 +36,7 @@ void test_Vecmap()
 
 	static_assert(std::is_same<
 			vool::vec_map<K, V>::bucket_t,
-			vool::vec_map_util::Bucket<K, V, true>
+			vool::vec_map_util::ref_bucket<K, V>
 		>::value, "vec_map bucket selection fail!");
 
 
