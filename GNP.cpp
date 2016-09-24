@@ -27,8 +27,7 @@ gnuplot::gnuplot(std::string gnuplot_path, const bool persist)
 	if (_gnuplot_pipe == NULL) // PIPE_OPEN itself failed
 		throw std::exception("PIPE_OPEN failed");
 
-	int ret_val = PIPE_CLOSE(_gnuplot_pipe);
-	if (ret_val != 0) // command failed
+	if (PIPE_CLOSE(_gnuplot_pipe) != 0) // command failed
 		throw std::exception("gnuplot filepath not found");
 
 	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
