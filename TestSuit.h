@@ -99,93 +99,93 @@ private:
 
 namespace suithelper
 {
-	class result_t
+class result_t
+{
+public:
+	graph_t graph;
+	std::string category_name;
+
+	explicit result_t(
+		graph_t g,
+		std::string n
+	)
+		: graph(std::move(g)), category_name(std::move(n))
+	{ }
+
+	result_t(const result_t&) = delete;
+	result_t(result_t&&) = default;
+
+	result_t& operator= (const result_t&) = delete;
+	result_t& operator= (result_t&&) = default;
+};
+
+template<typename Func> class test
+{
+public:
+	explicit test(const std::string&, Func&&);
+
+	test(const test&) = default;
+	test(test&&) = default;
+
+	test& operator= (const test&) = default;
+	test& operator= (test&&) = default;
+
+	point_t run_test(const size_t, const size_t);
+
+	void flag_invisible() { _visible = false; }
+
+	const std::string& name() const { return _name; }
+	const bool visible() const { return _visible; }
+
+private:
+	Func _func;
+	std::string _name;
+	bool _visible;
+
+	inline const auto start_timer() const
 	{
-	public:
-		graph_t graph;
-		std::string category_name;
+		return std::chrono::high_resolution_clock::now();
+	}
 
-		explicit result_t(
-			graph_t g,
-			std::string n
-		)
-			: graph(std::move(g)), category_name(std::move(n))
-		{ }
+	inline point_t stop_timer(
+		const std::chrono::high_resolution_clock::time_point&,
+		const size_t,
+		const size_t
+	);
+};
 
-		result_t(const result_t&) = delete;
-		result_t(result_t&&) = default;
+template<typename... Tests> class test_category
+{
+public:
+	explicit test_category(const std::string&, Tests&&...);
 
-		result_t& operator= (const result_t&) = delete;
-		result_t& operator= (result_t&&) = default;
-	};
+	test_category(const test_category&) = default;
+	test_category(test_category&&) = default;
 
-	template<typename Func> class test
-	{
-	public:
-		explicit test(const std::string&, Func&&);
+	test_category& operator= (const test_category&) = default;
+	test_category& operator= (test_category&&) = default;
 
-		test(const test&) = default;
-		test(test&&) = default;
+	graph_t perform_tests(
+		const size_t,
+		const size_t,
+		const size_t,
+		const size_t
+	);
 
-		test& operator= (const test&) = default;
-		test& operator= (test&&) = default;
+	const std::string& name() const { return _name; }
 
-		point_t run_test(const size_t, const size_t);
+private:
+	std::tuple<Tests...> _tests;
+	std::string _name;
 
-		void flag_invisible() { _visible = false; }
+	using graph_plots_t = std::vector<std::pair<
+		std::vector<point_t>, std::string>
+	>;
 
-		const std::string& name() const { return _name; }
-		const bool visible() const { return _visible; }
+	graph_plots_t build_graph_plots(const size_t);
 
-	private:
-		Func _func;
-		std::string _name;
-		bool _visible;
-
-		inline const auto start_timer() const
-		{
-			return std::chrono::high_resolution_clock::now();
-		}
-
-		inline point_t stop_timer(
-			const std::chrono::high_resolution_clock::time_point&,
-			const size_t,
-			const size_t
-		);
-	};
-
-	template<typename... Tests> class test_category
-	{
-	public:
-		explicit test_category(const std::string&, Tests&&...);
-
-		test_category(const test_category&) = default;
-		test_category(test_category&&) = default;
-
-		test_category& operator= (const test_category&) = default;
-		test_category& operator= (test_category&&) = default;
-
-		graph_t perform_tests(
-			const size_t,
-			const size_t,
-			const size_t,
-			const size_t
-		);
-
-		const std::string& name() const { return _name; }
-
-	private:
-		std::tuple<Tests...> _tests;
-		std::string _name;
-
-		using graph_plots_t = std::vector<std::pair<
-			std::vector<point_t>, std::string>
-		>;
-
-		graph_plots_t build_graph_plots(const size_t);
-
-		void benchmark_size(const size_t, const size_t, graph_plots_t&);
-	};
+	void benchmark_size(const size_t, const size_t, graph_plots_t&);
+};
 }
 
 template<typename T> struct ContainerConfig
@@ -213,142 +213,144 @@ template<typename T> std::vector<T> generate_container(ContainerConfig<T>);
 
 namespace suithelper
 {
-	// iteration, only tuple as argument
-	template<typename F, typename... Ts, std::size_t... Is>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
-	{
-		// execution order matters
-		static_cast<void>
-			(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
-	}
 
-	template<typename F, typename...Ts>
-	void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
-	{
-		// call for_each_in_tuple with the constructed index_sequence
-		for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
-	}
+// iteration, only tuple as argument
+template<typename F, typename... Ts, std::size_t... Is>
+void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
+{
+	// execution order matters
+	static_cast<void>
+		(std::initializer_list<int> { (func(std::get<Is>(tuple)), 0)... });
+}
+
+template<typename F, typename...Ts>
+void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
+{
+	// call for_each_in_tuple with the constructed index_sequence
+	for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
+}
 
 
-	// --- test ---
+// --- test ---
 
-	template<typename T> test<T>::test(
-		const std::string& name,
-		T&& func
-	)
-		:
-		_name(name),
-		_func(std::forward<T>(func)),
-		_visible(true)
-	{ }
+template<typename T> test<T>::test(
+	const std::string& name,
+	T&& func
+)
+	:
+	_name(name),
+	_func(std::forward<T>(func)),
+	_visible(true)
+{ }
 
-	template<typename T> inline suithelper::point_t test<T>::stop_timer(
-		const std::chrono::high_resolution_clock::time_point& start,
-		const size_t iterations,
-		const size_t repetitions
-	)
-	{
-		auto end = std::chrono::high_resolution_clock::now();
+template<typename T> inline suithelper::point_t test<T>::stop_timer(
+	const std::chrono::high_resolution_clock::time_point& start,
+	const size_t iterations,
+	const size_t repetitions
+)
+{
+	auto end = std::chrono::high_resolution_clock::now();
 
-		assert(repetitions != 0 && "Repeating task 0 times!");
-		int64_t delta_time = std::chrono::duration_cast<std::chrono::nanoseconds>
-			(end - start).count() / repetitions;
+	assert(repetitions != 0 && "Repeating task 0 times!");
+	int64_t delta_time = std::chrono::duration_cast<std::chrono::nanoseconds>
+		(end - start).count() / repetitions;
 
-		return{ static_cast<int64_t>(iterations), delta_time };
-	}
+	return{ static_cast<int64_t>(iterations), delta_time };
+}
 
-	template<typename T> suithelper::point_t test<T>::run_test(
-		const size_t size,
-		const size_t repetitions
-	)
-	{
-		auto start = start_timer();
-		for (size_t i = 0; i < repetitions; ++i)
-			_func(size);
-		return stop_timer(start, size, repetitions);
-	}
+template<typename T> suithelper::point_t test<T>::run_test(
+	const size_t size,
+	const size_t repetitions
+)
+{
+	auto start = start_timer();
+	for (size_t i = 0; i < repetitions; ++i)
+		_func(size);
+	return stop_timer(start, size, repetitions);
+}
 
-	// --- test_category ---
+// --- test_category ---
 
-	template<typename... Ts> test_category<Ts...>::test_category(
-		const std::string& categoryName,
-		Ts&&... tests
-	)
-		: _name(categoryName),
-		_tests(std::forward<Ts>(tests)...)
-	{ }
+template<typename... Ts> test_category<Ts...>::test_category(
+	const std::string& categoryName,
+	Ts&&... tests
+)
+	: _name(categoryName),
+	_tests(std::forward<Ts>(tests)...)
+{ }
 
-	template<typename... Ts> auto test_category<Ts...>::build_graph_plots(
-		const size_t reserve_size
-	) -> graph_plots_t
-	{
-		graph_plots_t graph_plots;
+template<typename... Ts> auto test_category<Ts...>::build_graph_plots(
+	const size_t reserve_size
+) -> graph_plots_t
+{
+	graph_plots_t graph_plots;
 
-		for_each_in_tuple(_tests,
-			[&](auto& test)
+	for_each_in_tuple(_tests,
+		[&](auto& test)
+		{
+			graph_plots.emplace_back(
+				std::vector<point_t>{},
+				test.name()
+			);
+			graph_plots.back().first.reserve(reserve_size);
+		}
+	);
+
+	return graph_plots;
+}
+
+template<typename... Ts> void test_category<Ts...>::benchmark_size(
+	const size_t size,
+	const size_t repetitions,
+	graph_plots_t& graph_plots
+)
+{
+	auto graph_plots_it = graph_plots.begin();
+
+	for_each_in_tuple(_tests,
+		[&graph_plots_it, size, repetitions](auto& test)
+		{
+			auto result = test.run_test(size, repetitions);
+
+			if (test.visible())
 			{
-				graph_plots.emplace_back(
-					std::vector<point_t>{},
-					test.name()
-				);
-				graph_plots.back().first.reserve(reserve_size);
+				graph_plots_it->first.push_back(result);
+				++graph_plots_it;
 			}
-		);
+		}
+	);
+};
 
-		return graph_plots;
-	}
+template<typename... Ts> graph_t test_category<Ts...>::perform_tests(
+	const size_t min,
+	const size_t max,
+	const size_t steps,
+	const size_t repetitions
+)
+{
+	auto graph_plots = build_graph_plots(steps + 2);
 
-	template<typename... Ts> void test_category<Ts...>::benchmark_size(
-		const size_t size,
-		const size_t repetitions,
-		graph_plots_t& graph_plots
-	)
-	{
-		auto graph_plots_it = graph_plots.begin();
+	for (size_t size = min; size < max; size += 1 + max / steps)
+		benchmark_size(size, repetitions, graph_plots);
 
-		for_each_in_tuple(_tests,
-			[&graph_plots_it, size, repetitions](auto& test)
-			{
-				auto result = test.run_test(size, repetitions);
+	benchmark_size(max, repetitions, graph_plots);
 
-				if (test.visible())
-				{
-					graph_plots_it->first.push_back(result);
-					++graph_plots_it;
-				}
-			}
-		);
-	};
+	std::sort(graph_plots.begin(), graph_plots.end(),
+		[](const auto& a, const auto& b)
+		{ return a.first.back().second > b.first.back().second; }
+	);
 
-	template<typename... Ts> graph_t test_category<Ts...>::perform_tests(
-		const size_t min,
-		const size_t max,
-		const size_t steps,
-		const size_t repetitions
-	)
-	{
-		auto graph_plots = build_graph_plots(steps + 2);
+	uint32_t index = {};
+	graph_t category_graph;
 
-		for (size_t size = min; size < max; size += 1 + max / steps)
-			benchmark_size(size, repetitions, graph_plots);
+	std::for_each(graph_plots.begin(), graph_plots.end(),
+		[&category_graph, &index](const auto& plot)
+		{ category_graph.emplace_back(std::move(plot.first), index++, plot.second); }
+	);
 
-		benchmark_size(max, repetitions, graph_plots);
+	return category_graph;
+}
 
-		std::sort(graph_plots.begin(), graph_plots.end(),
-			[](const auto& a, const auto& b)
-			{ return a.first.back().second > b.first.back().second; }
-		);
-
-		uint32_t index = {};
-		graph_t category_graph;
-
-		std::for_each(graph_plots.begin(), graph_plots.end(),
-			[&category_graph, &index](const auto& plot)
-			{ category_graph.emplace_back(std::move(plot.first), index++, plot.second); }
-		);
-
-		return category_graph;
-	}
 }
 
 // --- test_suit ---
