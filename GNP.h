@@ -17,28 +17,7 @@
 namespace vool
 {
 
-template<typename T> struct plot_data_2D
-{
-public:
-	using point_t = std::pair<T, T>; // first = x second = y
-
-	explicit plot_data_2D(
-		const std::vector<point_t>,
-		const uint32_t,
-		const std::string&
-	);
-
-	const auto& points() const { return _points; }
-	const auto linestyle() const { return _linestyle; }
-	const auto index() const { return _index; }
-	const auto& name() const { return _name; }
-
-private:
-	std::vector<point_t> _points;
-	uint32_t _linestyle;
-	uint32_t _index;
-	std::string _name;
-};
+template<typename T> struct plot_data_2D;
 
 class gnuplot
 {
@@ -99,6 +78,29 @@ public:
 
 private:
 	FILE* _gnuplot_pipe;
+};
+
+template<typename T> struct plot_data_2D
+{
+public:
+	using point_t = std::pair<T, T>; // first = x second = y
+
+	explicit plot_data_2D(
+		const std::vector<point_t>,
+		const uint32_t,
+		const std::string&
+	);
+
+	const auto& points() const { return _points; }
+	const auto linestyle() const { return _linestyle; }
+	const auto index() const { return _index; }
+	const auto& name() const { return _name; }
+
+private:
+	std::vector<point_t> _points;
+	uint32_t _linestyle;
+	uint32_t _index;
+	std::string _name;
 };
 
 // ----- IMPLEMENTATION -----
