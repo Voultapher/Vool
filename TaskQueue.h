@@ -52,13 +52,11 @@ public:
 	explicit async_task(async_t::task_t&&, const async_t::prereq_t&);
 
 	// no synchronization problems this way
-	async_task(const async_task& other) = delete;
+	async_task(const async_task&) = delete;
+	async_task(async_task&&) = delete;
 
-	async_task(async_task&& other) = delete;
-
-	async_task& operator=(const async_task& other) = delete;
-
-	async_task& operator=(async_task&& other) = delete;
+	async_task& operator=(const async_task&) = delete;
+	async_task& operator=(async_task&&) = delete;
 
 	const async_t::prereq_t& get_prerequisites() const;
 
@@ -78,13 +76,11 @@ public:
 
 	explicit task_queue() noexcept;
 
-	task_queue(const task_queue& other) = delete; // no copy constructor
+	task_queue(const task_queue&) = delete;
+	task_queue(task_queue&&) = delete;
 
-	task_queue(task_queue&& other) = delete; // no move constructor
-
-	task_queue& operator=(const task_queue& other) = delete; // no copy operator
-
-	task_queue& operator=(task_queue&& other) = delete; // no move operator
+	task_queue& operator=(const task_queue&) = delete;
+	task_queue& operator=(task_queue&&) = delete;
 
 	~task_queue() noexcept;
 

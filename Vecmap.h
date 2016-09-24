@@ -29,17 +29,11 @@ public:
 
 	Bucket(const K&, const V&);
 
-	// copy constructor
-	Bucket(const Bucket<K, V, true>&);
+	Bucket(const Bucket&);
+	Bucket(Bucket&&);
 
-	// move constructor
-	Bucket(Bucket<K, V, true>&&);
-
-	// copy operator
-	Bucket<K, V, true>& operator= (const Bucket<K, V, true>&);
-
-	// move operator
-	Bucket<K, V, true>& operator= (Bucket<K, V, true>&&);
+	Bucket& operator= (const Bucket&);
+	Bucket& operator= (Bucket&&);
 
 	~Bucket() noexcept;
 
@@ -48,7 +42,7 @@ public:
 	const K& getKey() const { return _key; }
 
 	bool operator< (const K& comp) const { return _key < comp; }
-	bool operator< (const Bucket<K, V, true>& comp) const { return _key < comp._key; }
+	bool operator< (const Bucket& comp) const { return _key < comp._key; }
 
 private:
 	K _key;
@@ -62,6 +56,12 @@ public:
 
 	Bucket(const K&, const value_t&);
 
+	Bucket(const Bucket&) = default;
+	Bucket(Bucket&&) = default;
+
+	Bucket& operator= (const Bucket&) = default;
+	Bucket& operator= (Bucket&&) = default;
+
 	~Bucket() noexcept { }
 
 	V& getValue() { return _value; }
@@ -71,7 +71,7 @@ public:
 	const K& getKey() const { return _key; }
 
 	bool operator< (const K& comp) const { return _key < comp; }
-	bool operator< (const Bucket<K, V, false>& comp) const { return _key < comp._key; }
+	bool operator< (const Bucket& comp) const { return _key < comp._key; }
 
 private:
 	K _key;
@@ -87,23 +87,15 @@ public:
 	using bucket_t = typename vec_map_util::Bucket<K, V, (sizeof(V) >(4 * sizeof(size_t)))>;
 	using bucket_it_t = typename std::vector<bucket_t>::iterator;
 
-	// default constructor
 	explicit vec_map();
 
-	// copy constructor
-	vec_map(const vec_map<K, V>& other) = default;
-
-	// move constructor
-	vec_map(vec_map<K, V>&& other) = default;
-
-	// initializer_list constructor
 	vec_map(std::initializer_list<bucket_t>);
 
-	// copy operator
-	vec_map<K, V>& operator= (const vec_map<K, V>& other) = default;
+	vec_map(const vec_map&) = default;
+	vec_map(vec_map&&) = default;
 
-	// move operator
-	vec_map<K, V>& operator= (vec_map<K, V>&& other) = default;
+	vec_map& operator= (const vec_map&) = default;
+	vec_map& operator= (vec_map&&) = default;
 
 	~vec_map() noexcept { }
 
@@ -237,7 +229,10 @@ template<typename K, typename V> Bucket<K, V, true>& Bucket<K, V, true>::operato
 	return *this;
 }
 
-template<typename K, typename V> Bucket<K, V, true>::~Bucket() noexcept { delete _value; }
+template<typename K, typename V> Bucket<K, V, true>::~Bucket() noexcept
+{
+	delete _value;
+}
 
 
 // -false specialization-
@@ -253,7 +248,6 @@ template<typename K, typename V> Bucket<K, V, false>::Bucket(
 
 
 // --- vec_map ---
-
 
 template<typename K, typename V> vec_map<K, V>::vec_map() :
 	_is_sorted(true)

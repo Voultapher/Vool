@@ -99,8 +99,9 @@ private:
 
 namespace suithelper
 {
-	struct result_t
+	class result_t
 	{
+	public:
 		graph_t graph;
 		std::string category_name;
 
@@ -122,6 +123,12 @@ namespace suithelper
 	{
 	public:
 		explicit test(const std::string&, Func&&);
+
+		test(const test&) = default;
+		test(test&&) = default;
+
+		test& operator= (const test&) = default;
+		test& operator= (test&&) = default;
 
 		point_t run_test(const size_t, const size_t);
 
@@ -150,10 +157,13 @@ namespace suithelper
 	template<typename... Tests> class test_category
 	{
 	public:
-		explicit test_category(const std::string& categoryName, Tests&&... tests)
-			: _name(categoryName),
-			_tests(std::forward<Tests>(tests)...)
-		{ }
+		explicit test_category(const std::string&, Tests&&...);
+
+		test_category(const test_category&) = default;
+		test_category(test_category&&) = default;
+
+		test_category& operator= (const test_category&) = default;
+		test_category& operator= (test_category&&) = default;
 
 		graph_t perform_tests(
 			const size_t,
@@ -259,6 +269,14 @@ namespace suithelper
 	}
 
 	// --- test_category ---
+
+	template<typename... Ts> test_category<Ts...>::test_category(
+		const std::string& categoryName,
+		Ts&&... tests
+	)
+		: _name(categoryName),
+		_tests(std::forward<Ts>(tests)...)
+	{ }
 
 	template<typename... Ts> auto test_category<Ts...>::build_graph_plots(
 		const size_t reserve_size

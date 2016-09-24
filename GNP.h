@@ -24,13 +24,11 @@ class gnuplot
 public:
 	explicit gnuplot(std::string, const bool = true);
 
+	gnuplot(const gnuplot&) = delete;
 	gnuplot(gnuplot&&);
 
+	gnuplot& operator=(const gnuplot&) = delete;
 	gnuplot& operator=(gnuplot&&);
-
-	gnuplot(const gnuplot&) = delete; // no copy constructor
-
-	gnuplot& operator=(const gnuplot&) = delete; // no copy operator
 
 	~gnuplot() noexcept;
 
