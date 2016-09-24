@@ -24,7 +24,7 @@
 namespace vool
 {
 
-namespace suithelper
+namespace test_suit_util
 {
 	using plot_t = plot_data_2D<int64_t>;
 	using point_t = plot_t::point_t;
@@ -64,7 +64,7 @@ struct suit_config
 template<typename... TestCategorys> class test_suit
 {
 public:
-	using result_t = suithelper::result_t;
+	using result_t = test_suit_util::result_t;
 
 	explicit test_suit(
 		const suit_config&,
@@ -92,12 +92,12 @@ private:
 
 	gnuplot _gnuplot;
 
-	bool valid_graph(const suithelper::graph_t&);
+	bool valid_graph(const test_suit_util::graph_t&);
 
 	void pipe_result(const result_t&);
 };
 
-namespace suithelper
+namespace test_suit_util
 {
 class result_t
 {
@@ -211,7 +211,7 @@ template<typename T> std::vector<T> generate_container(ContainerConfig<T>);
 
 // ----- IMPLEMENTATION -----
 
-namespace suithelper
+namespace test_suit_util
 {
 
 // iteration, only tuple as argument
@@ -243,7 +243,7 @@ template<typename T> test<T>::test(
 	_visible(true)
 { }
 
-template<typename T> inline suithelper::point_t test<T>::stop_timer(
+template<typename T> inline test_suit_util::point_t test<T>::stop_timer(
 	const std::chrono::high_resolution_clock::time_point& start,
 	const size_t iterations,
 	const size_t repetitions
@@ -258,7 +258,7 @@ template<typename T> inline suithelper::point_t test<T>::stop_timer(
 	return{ static_cast<int64_t>(iterations), delta_time };
 }
 
-template<typename T> suithelper::point_t test<T>::run_test(
+template<typename T> test_suit_util::point_t test<T>::run_test(
 	const size_t size,
 	const size_t repetitions
 )
@@ -385,7 +385,7 @@ template<typename... Ts> void test_suit<Ts...>::perform_categorys(
 
 	_results.clear();
 
-	suithelper::for_each_in_tuple(_categorys,
+	test_suit_util::for_each_in_tuple(_categorys,
 		[
 			min,
 			max,
@@ -403,7 +403,7 @@ template<typename... Ts> void test_suit<Ts...>::perform_categorys(
 }
 
 template<typename... Ts> bool test_suit<Ts...>::valid_graph(
-	const suithelper::graph_t& graph
+	const test_suit_util::graph_t& graph
 )
 {
 	if (graph.size() == 0)
@@ -475,18 +475,18 @@ template<typename... Ts> void test_suit<Ts...>::render_results()
 
 // --- make funcitons ---
 
-template<typename T> suithelper::test<T> make_test(
+template<typename T> test_suit_util::test<T> make_test(
 	const std::string& testName, T func
 )
 {
-	return suithelper::test<T>(testName, std::forward<T>(func));
+	return test_suit_util::test<T>(testName, std::forward<T>(func));
 }
 
-template<typename... Ts> suithelper::test_category<Ts...>make_test_category(
+template<typename... Ts> test_suit_util::test_category<Ts...>make_test_category(
 	const std::string& categoryName, Ts&&... tests
 )
 {
-	return suithelper::test_category<Ts...>(
+	return test_suit_util::test_category<Ts...>(
 		categoryName,
 		std::forward<Ts>(tests)...
 	);
