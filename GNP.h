@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iostream>
 
 namespace vool
 {
@@ -162,28 +163,29 @@ template<typename T> void gnuplot::write(
 	const std::string& filepath
 )
 {
-	if (plots.size() > 0)
+	if (plots.size() == 0)
+		return;
+
+	// write data to filepath
+	std::ofstream plot_file(filepath);
+
+	if (!std::ifstream(filepath).good())
 	{
-		// write data to filepath
-		std::ofstream plot_file(filepath);
-
-		if (plot_file.fail()) {
-			std::perror(filepath.c_str());
-			return;
-		}
-
-		for (const auto& plot : plots)
-		{
-			plot_file << util::convert_to_string_v("#(index ", plot.index(), ")\n");
-			plot_file << "# X Y\n";
-			for (const auto pointPair : plot.points())
-				plot_file << util::convert_to_string_v
-				("  ", pointPair.first, " ", pointPair.second, "\n");
-
-			plot_file << "\n\n";
-		}
-		plot_file.close();
+		std::cerr << "File \"" << filepath.c_str() << "\" not found!\n";
+		return;
 	}
+
+	for (const auto& plot : plots)
+	{
+		plot_file << util::convert_to_string_v("#(index ", plot.index(), ")\n");
+		plot_file << "# X Y\n";
+		for (const auto point : plot.points())
+			plot_file << util::convert_to_string_v
+			("  ", point.first, " ", point.second, "\n");
+
+		plot_file << "\n\n";
+	}
+	plot_file.close();
 }
 
 template<typename T> void gnuplot::plot(
@@ -191,6 +193,12 @@ template<typename T> void gnuplot::plot(
 	const std::string& filepath
 )
 {
+	if (!std::ifstream(filepath).good())
+	{
+		std::cerr << "File \"" << filepath.c_str() << "\" not found!\n";
+		return;
+	}
+
 	// create command and push it to gnuplot
 	std::string command = "plot '" + filepath + "' ";
 	for (const auto& plot : plots)
