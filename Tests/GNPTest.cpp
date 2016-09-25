@@ -1,9 +1,9 @@
 /*
 * Vool - Unit tests for GNP, as it will open a pipe to an external application, testability is limited
 *
-* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+* Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+* This code is licensed under the AFL-3.0 license (http://opensource.org/licenses/AFL-3.0)
 */
 
 #include "AllTests.h"
@@ -22,14 +22,14 @@ namespace test
 
 void test_GNP()
 {
-	const std::string gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
+	const std::string gnuplot_path = "C:\\ProgramData\\gnuplot\\bin";
 
 	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
 	if (converted != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");
 
-	gnuplot gnpOpen(gnuplotPath, true); // stay open until user closes gnuplot
-	gnuplot gnp(gnuplotPath, false); // close after task termination
+	gnuplot gnpOpen(gnuplot_path, true); // stay open until user closes gnuplot
+	gnuplot gnp(gnuplot_path, false); // close after task termination
 
 	gnp << "set samples 10"; // operator<< call
 	gnp("set samples ", 150); // operator() call

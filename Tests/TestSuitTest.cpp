@@ -1,9 +1,9 @@
 /*
 * Vool - Unit tests for test_suit, as it is highly generic, many cases wont be tested
 *
-* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+* Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+* This code is licensed under the AFL-3.0 license (http://opensource.org/licenses/AFL-3.0)
 */
 
 #include "AllTests.h"

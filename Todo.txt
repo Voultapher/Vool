@@ -14,6 +14,3 @@ Vecmap:
 Check if using an unordered_map under with size_t as key and value as value,
 and storing the key in Bucket instead of a pointer is beneficial.
 There may be a memory leak.
-
-
-REMOVE parameter names from default constructors

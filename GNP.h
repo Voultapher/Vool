@@ -1,9 +1,9 @@
 /*
 * Vool - gnuplot interface using popen/ _popen to pipe data to gnuplot
 *
-* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+* Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+* This code is licensed under the AFL-3.0 license (http://opensource.org/licenses/AFL-3.0)
 */
 
 #ifndef VOOL_GNP_H_INCLUDED
