@@ -103,7 +103,10 @@ void test_Vecmap()
 			keyAndValueVec.push_back(std::make_pair(key, value));
 
 		vool::vec_map<K, V> range;
-		range.insert(keyAndValueVec.begin(), keyAndValueVec.end()); // key value insert
+		std::for_each(keyAndValueVec.begin(), keyAndValueVec.end(),
+			[&range](const auto& kvPair)
+			{ range.insert(kvPair.first, kvPair.second); }
+		);
 		if (range.size() != keyAndValueVec.size())
 			throw std::exception("key value range insert error");
 

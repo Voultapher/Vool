@@ -50,11 +50,6 @@ public:
 	void insert(const bucket_t&);
 
 	void insert(
-		const typename std::vector<std::pair<K, V>>::iterator,
-		const typename std::vector<std::pair<K, V>>::iterator
-	);
-
-	void insert(
 		const bucket_it_t,
 		const bucket_it_t
 	);
@@ -280,15 +275,6 @@ template<typename K, typename V> void vec_map<K, V>::insert(
 	// bucket insert
 	_buckets.emplace_back(bucket.getKey(), bucket.getValue());
 	_is_sorted = false;
-}
-
-template<typename K, typename V> void vec_map<K, V>::insert(
-	const typename std::vector<std::pair<K, V>>::iterator first,
-	const typename std::vector<std::pair<K, V>>::iterator last
-)
-{
-	for (auto keyIt = first; keyIt != last; ++keyIt)
-		insert(keyIt->first, keyIt->second);
 }
 
 template<typename K, typename V> void vec_map<K, V>::insert(
