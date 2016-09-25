@@ -50,7 +50,7 @@ void test_GNP()
 	std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };
 	std::vector<plot_data_2D<double>> plot;
 	plot.emplace_back(dataPoints, 0, "Test Points");
-	gnp.write_and_plot(plot, "PlotResults\\PlotData\\GNPTestData.dat");
+	gnp.write_and_plot(plot, "data\\GNPTestData.dat");
 }
 
 }
