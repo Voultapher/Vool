@@ -18,7 +18,7 @@
 namespace vool
 {
 
-namespace test
+namespace tests
 {
 
 void test_TaskQueue()

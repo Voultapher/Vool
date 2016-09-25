@@ -16,7 +16,7 @@
 namespace vool
 {
 
-namespace test
+namespace tests
 {
 
 struct BigData
@@ -31,7 +31,6 @@ void test_Vecmap()
 {
 	// configuration
 	using K = size_t;
-	using V = test::BigData;
 	size_t containerSize = static_cast<K>(1e4);
 
 	static_assert(std::is_same<

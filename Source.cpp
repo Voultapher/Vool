@@ -1,5 +1,4 @@
 /*
-* Vool - Example usage of Vool
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -29,11 +28,11 @@ int main()
 {
 	std::cout << "\tRunning unit tests:\n\n";
 
-	runUnitTest("Utility", vool::test::test_Utility);
-	runUnitTest("Vecmap", vool::test::test_Vecmap);
-	runUnitTest("GNP", vool::test::test_GNP);
-	runUnitTest("TestSuit", vool::test::test_TestSuit);
-	runUnitTest("TaskQueue", vool::test::test_TaskQueue);
+	runUnitTest("Utility", vool::tests::test_Utility);
+	runUnitTest("Vecmap", vool::tests::test_Vecmap);
+	runUnitTest("GNP", vool::tests::test_GNP);
+	runUnitTest("TestSuit", vool::tests::test_TestSuit);
+	runUnitTest("TaskQueue", vool::tests::test_TaskQueue);
 
 	std::cout << "\n\tAll unit test done!\n\n" << std::flush;
 
