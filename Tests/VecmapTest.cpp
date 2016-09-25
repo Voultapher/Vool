@@ -1,5 +1,5 @@
 /*
-* Vool - Unit tests for Vecmap, should basically call every member function and test for expected behaviour
+* Vool - Unit tests for vec_map
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *

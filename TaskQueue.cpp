@@ -1,7 +1,5 @@
-//#include "TaskQueue.h"
-
 /*
-* task_queue - Smart multithreading helper, designed for small overhead
+* Vool - Smart multithreading helper, designed for small overhead
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *

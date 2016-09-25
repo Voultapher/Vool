@@ -1,5 +1,5 @@
 /*
-* Vool - Unit tests for test_suit, as it is highly generic, many cases wont be tested
+* Vool - Unit tests for test_suit, as it is highly generic, many cases won't be tested
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *

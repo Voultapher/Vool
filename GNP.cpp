@@ -1,5 +1,5 @@
 /*
-* Vool - gnuplot interface using popen/ _popen to pipe data to gnuplot
+* Vool - gnuplot interface using popen to pipe data to gnuplot
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
