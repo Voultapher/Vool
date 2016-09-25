@@ -31,6 +31,7 @@ void test_Vecmap()
 {
 	// configuration
 	using K = size_t;
+	using V = BigData;
 	size_t containerSize = static_cast<K>(1e4);
 
 	static_assert(std::is_same<
