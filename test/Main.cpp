@@ -6,8 +6,8 @@
 * This code is licensed under the AFL-3.0 license (http://opensource.org/licenses/AFL-3.0)
 */
 
-#include "Tests\AllTests.h"
-#include "Tests\ODRTest.h"
+#include "AllTests.h"
+#include "ODRTest.h"
 
 #include <iostream>
 #include <functional>
