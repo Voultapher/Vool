@@ -3,7 +3,7 @@
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the AFL-3.0 license (http://opensource.org/licenses/AFL-3.0)
+* This code is licensed under the Apache License 2.0 (https://opensource.org/licenses/Apache-2.0)
 */
 
 #ifndef VOOL_TESTS_ODRTEST_H_INCLUDED
