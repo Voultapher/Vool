@@ -120,6 +120,12 @@ public:
 		while (_flag.test_and_set(std::memory_order_acq_rel));
 	}
 
+	atomic_lock(const atomic_lock&) = delete;
+	atomic_lock(atomic_lock&&) = delete;
+
+	atomic_lock& operator= (const atomic_lock&) = delete;
+	atomic_lock& operator= (atomic_lock&&) = delete;
+
 	~atomic_lock() noexcept
 	{
 		// signal that the lock is free
