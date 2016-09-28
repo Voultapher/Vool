@@ -106,14 +106,30 @@ private:
 		async_t::task_t&&,
 		std::vector<async_t::prereq>
 	);
-
-	inline void lock() noexcept;
-
-	inline void unlock() noexcept;
 };
 
 namespace task_queue_util
 {
+class atomic_lock
+{
+public:
+	explicit atomic_lock(std::atomic_flag& flag) noexcept
+		: _flag(flag)
+	{
+		// wait until the lock is free
+		while (_flag.test_and_set(std::memory_order_acq_rel));
+	}
+
+	~atomic_lock() noexcept
+	{
+		// signal that the lock is free
+		_flag.clear(std::memory_order_release);
+	}
+
+private:
+	std::atomic_flag& _flag;
+};
+
 class async_task
 {
 public:

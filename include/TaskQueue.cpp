@@ -123,13 +123,12 @@ void task_queue::queue_loop()
 	{
 		relevant_tasks_keys.clear();
 
-		lock();
+		auto lock = task_queue_util::atomic_lock(_sync);
 
 		launch_unstarted(relevant_tasks_keys);
 
 		remove_finished_tasks(relevant_tasks_keys);
 
-		unlock();
 		std::this_thread::yield();
 	}
 }
@@ -152,7 +151,7 @@ async_t::prereq task_queue::emplace_task(
 	std::vector<async_t::prereq> prerequisites
 )
 {
-	lock();
+	auto lock = task_queue_util::atomic_lock(_sync);
 
 	if (prerequisites.size() > 0)
 		remove_finished_prerequisites(prerequisites);
@@ -169,8 +168,6 @@ async_t::prereq task_queue::emplace_task(
 	async_t::prereq prerequisite(_start_key);
 	++_start_key;
 
-	unlock();
-
 	return prerequisite;
 }
 
@@ -179,23 +176,12 @@ void task_queue::finish_all_active_tasks()
 	while (true)
 	{
 		// wait until all tasks are finished
-		lock();
+		auto lock = task_queue_util::atomic_lock(_sync);
+
 		if (_tasks.size() == 0)
 			break;
-		unlock();
 		std::this_thread::yield();
 	}
-	unlock();
-}
-
-inline void task_queue::lock() noexcept
-{
-	while (_sync.test_and_set(std::memory_order_acq_rel));
-}
-
-inline void task_queue::unlock() noexcept
-{
-	_sync.clear(std::memory_order_release); // signal that the lock is free
 }
 
 
@@ -252,13 +238,12 @@ void task_queue::wait(const async_t::prereq& prerequisite)
 {
 	while (true)
 	{
-		lock();
+		auto lock = task_queue_util::atomic_lock(_sync);
+
 		if (_tasks.find(prerequisite.key()) == _tasks.end())
 			break; // task is finished and was deleted
-		unlock();
 		std::this_thread::yield();
 	}
-	unlock();
 }
 
 void task_queue::wait_all()
