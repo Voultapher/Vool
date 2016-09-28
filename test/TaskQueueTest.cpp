@@ -93,7 +93,7 @@ void test_TaskQueue()
 		task_queue tq;
 
 		async_t::key_t evil(1);
-		tq.wait(async_t::public_key_t(evil));
+		tq.wait(async_t::prereq(evil));
 
 		// this should not block
 		// nonexisting prerequisites usually indicate an allready finished task
@@ -175,7 +175,7 @@ void test_TaskQueue()
 
 		size_t size = 1000;
 		std::vector<int> v;
-		async_t::public_key_t condition(async_t::key_t(0));
+		async_t::prereq condition(async_t::key_t(0));
 
 		std::promise<void> sync;
 
@@ -276,7 +276,7 @@ void test_TaskQueue()
 			sums.resize(vecs.size() * 2);
 			auto sums_it = sums.begin();
 
-			std::vector<async_t::public_key_t> conditionsA;
+			std::vector<async_t::prereq> conditionsA;
 			for (const auto& vec : vecs)
 				conditionsA.push_back(tq.add_task(
 					[&vec, sum, it = sums_it++]() { *it = sum(vec); }));
@@ -290,13 +290,13 @@ void test_TaskQueue()
 				conditionsA);
 
 			// C
-			std::vector<async_t::public_key_t> conditionsC;
+			std::vector<async_t::prereq> conditionsC;
 			for (auto& vec : vecs)
 				conditionsC.push_back(tq.add_task(([&vec, &groov, increaseGroov]()
 			{ increaseGroov(vec, groov); }), { conditionB }));
 
 			// D
-			std::vector<async_t::public_key_t> conditionsD;
+			std::vector<async_t::prereq> conditionsD;
 			for (const auto& vec : vecs)
 				conditionsD.push_back(tq.add_task(
 					[&vec, sum, it = sums_it++]() { *it = sum(vec); }, conditionsC));

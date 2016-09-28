@@ -9,6 +9,7 @@
 #include "TaskQueue.h"
 
 #include <algorithm>
+#include <cassert>
 
 namespace vool
 {
@@ -16,78 +17,24 @@ namespace vool
 namespace async_t
 {
 
-public_key_t::public_key_t(const key_t& init) : _val(init) { }
+// --- prereq ---
 
-template<typename T> public_key_t::public_key_t(const T& init)
+prereq::prereq(const key_t& init) : _val(init) { }
+
+template<typename T> prereq::prereq(const T& init)
 {
 	static_assert(std::is_same<T, async_t::key_t>::value,
 		"Wrong public_key init type!");
 
 	static_assert(!std::is_same<T, async_t::key_t>::value,
-		"public_key_t overload constructor fail!");
+		"prereq overload constructor fail!");
 }
 
-const key_t& public_key_t::get() const { return _val; }
-
-using prereq_t = std::vector<key_t>;
-using public_prereq_t = std::vector<public_key_t>;
-
 }
-
-
-// --- async_task ---
-
-async_task::async_task(
-	const async_t::task_t& user_task,
-	const async_t::prereq_t& prereqs
-)
-	:
-	task(init_task(user_task)),
-	_prerequisites(prereqs)
-{
-	active_flag.test_and_set(std::memory_order_acq_rel); // default to active
-}
-
-async_task::async_task(
-	async_t::task_t&& user_task,
-	const async_t::prereq_t& prereqs
-)
-	:
-	task(init_task(std::forward<async_t::task_t>(user_task))),
-	_prerequisites(prereqs)
-{
-	active_flag.test_and_set(std::memory_order_acq_rel); // default to active
-}
-
-inline async_t::task_t async_task::init_task(const async_t::task_t& user_task) noexcept
-{
-	async_t::task_t res([&user_task, &flag_ref = active_flag]() -> void
-	{
-		user_task();
-		flag_ref.clear(std::memory_order_release);
-	});
-	return res;
-}
-
-inline async_t::task_t async_task::init_task(async_t::task_t&& user_task) noexcept
-{
-	async_t::task_t res([u_task = std::move(user_task), &flag_ref = active_flag]() -> void
-	{
-		u_task();
-		flag_ref.clear(std::memory_order_release);
-	});
-	return res;
-}
-
-const async_t::prereq_t& async_task::get_prerequisites() const
-{
-	return _prerequisites;
-}
-
 
 // --- task_queue ---
 
-inline bool task_queue::task_active(async_task& task)
+inline bool task_queue::task_active(task_queue_util::async_task& task)
 {
 	if (task.active_flag.test_and_set(std::memory_order_acq_rel))
 		return true;
@@ -104,24 +51,16 @@ bool task_queue::task_ready(
 {
 	bool ready = true;
 
-	for (const auto& prereq_key : (task_it->second.get_prerequisites()))
+	for (const auto& prerequisite : (task_it->second.prerequisites()))
 	{
-		auto prereq_it = _tasks.find(prereq_key);
+		auto task_it = _tasks.find(prerequisite.key());
+		assert(task_it != _tasks.end() &&
+			"A task from _tasks was removed although it still was a prerequisite!");
 
-		if (prereq_it != _tasks.end())
-		{
-			relevant_tasks_keys.push_back(prereq_key);
+		relevant_tasks_keys.push_back(prerequisite.key());
 
-			if (task_active(prereq_it->second))
-				ready = false;
-		}
-		else
-		{
-			// should never happen without external manipulation
-			throw std::exception(
-				"A task from _tasks was removed although"
-				"it still was a prerequisite!\n");
-		}
+		if (task_active(task_it->second))
+			ready = false;
 	}
 
 	return ready;
@@ -134,26 +73,19 @@ void task_queue::launch_unstarted(
 	keys_t still_unstarted_tasks_keys;
 	for (const auto unstarted_key : _unstarted_tasks_keys)
 	{
-		tasks_t::iterator task_it = _tasks.find(unstarted_key);
+		auto task_it = _tasks.find(unstarted_key);
+		assert(task_it != _tasks.end() && "An unstarted task was removed from _tasks");
 
-		if (task_it != _tasks.end())
+		relevant_tasks_keys.push_back(unstarted_key);
+
+		if (task_ready(task_it, relevant_tasks_keys))
 		{
-			relevant_tasks_keys.push_back(unstarted_key);
-			
-			if (task_ready(task_it, relevant_tasks_keys))
-			{
-				// dispatch task
-				task_it->second.future =
-					std::async(std::launch::async, std::move(task_it->second.task));
-			}
-			else
-				still_unstarted_tasks_keys.push_back(unstarted_key);
+			// dispatch task
+			task_it->second.future =
+				std::async(std::launch::async, std::move(task_it->second.task));
 		}
 		else
-		{
-			// should never happen without external manipulation
-			throw std::exception("An unstarted task was removed from _tasks\n");
-		}
+			still_unstarted_tasks_keys.push_back(unstarted_key);
 	}
 
 	_unstarted_tasks_keys = std::move(still_unstarted_tasks_keys);
@@ -181,7 +113,6 @@ void task_queue::remove_finished_tasks(
 
 void task_queue::queue_loop()
 {
-	// precreate resources for later reusability
 	constexpr size_t min_reserve = 100;
 
 	keys_t relevant_tasks_keys;
@@ -203,18 +134,44 @@ void task_queue::queue_loop()
 	}
 }
 
-async_t::prereq_t task_queue::remove_finished_prerequisites
-(const async_t::public_prereq_t& prerequisites)
+void task_queue::remove_finished_prerequisites
+(std::vector<async_t::prereq>& prerequisites)
 {
-	async_t::prereq_t ret;
-	ret.reserve(prerequisites.size());
+	
+	prerequisites.erase(
+		std::remove_if(prerequisites.begin(), prerequisites.end(),
+			[&tasks = _tasks](const auto prerequisite) -> bool
+			{ return tasks.count(prerequisite.key()) == 0; }
+		),
+		prerequisites.end()
+	);
+}
 
-	for (auto& prerequisite : prerequisites)
-		if (_tasks.find(prerequisite.get()) != _tasks.end())
-			ret.push_back(prerequisite.get());
+async_t::prereq task_queue::emplace_task(
+	async_t::task_t&& task,
+	std::vector<async_t::prereq> prerequisites
+)
+{
+	lock();
 
-	ret.shrink_to_fit();
-	return ret;
+	if (prerequisites.size() > 0)
+		remove_finished_prerequisites(prerequisites);
+
+	_tasks.emplace(std::piecewise_construct,
+		std::make_tuple(_start_key),
+		std::forward_as_tuple(
+			std::forward<async_t::task_t>(task),
+			prerequisites
+		)
+	);
+	_unstarted_tasks_keys.push_back(_start_key);
+
+	async_t::prereq prerequisite(_start_key);
+	++_start_key;
+
+	unlock();
+
+	return prerequisite;
 }
 
 void task_queue::finish_all_active_tasks()
@@ -261,50 +218,42 @@ task_queue::~task_queue() noexcept
 	_queue_loop_future.wait();
 }
 
-async_t::public_key_t task_queue::add_task(
+async_t::prereq task_queue::add_task(
+	const async_t::task_t& task
+)
+{
+	return emplace_task(async_t::task_t(task), {});
+}
+
+async_t::prereq task_queue::add_task(
 	const async_t::task_t& task,
-	async_t::public_prereq_t prerequisites
+	std::vector<async_t::prereq> prerequisites
 )
 {
-	lock();
-	auto sanitzed = remove_finished_prerequisites(prerequisites);
-	_tasks.emplace(std::piecewise_construct,
-		std::make_tuple(_start_key),
-		std::forward_as_tuple(task, sanitzed));
-	_unstarted_tasks_keys.push_back(_start_key);
-
-	unlock();
-
-	// return key to task structure, to be used by the user as prerequisite for later tasks
-	// lock safe aslong _start_key is not being used in queue_loop
-	return async_t::public_key_t(_start_key++);
+	return emplace_task(async_t::task_t(task), prerequisites);
 }
 
-async_t::public_key_t task_queue::add_task(
+async_t::prereq task_queue::add_task(
+	async_t::task_t&& task
+)
+{
+	return emplace_task(std::forward<async_t::task_t>(task), {});
+}
+
+async_t::prereq task_queue::add_task(
 	async_t::task_t&& task,
-	async_t::public_prereq_t prerequisites
+	std::vector<async_t::prereq> prerequisites
 )
 {
-	lock();
-	auto sanitzed = remove_finished_prerequisites(prerequisites);
-	_tasks.emplace(std::piecewise_construct,
-		std::make_tuple(_start_key),
-		std::forward_as_tuple(std::forward<async_t::task_t>(task), sanitzed));
-	_unstarted_tasks_keys.push_back(_start_key);
-
-	unlock();
-
-	// return key to task structure, to be used by the user as prerequisite for later tasks
-	// thread safe aslong _start_key is not being used in queue_loop
-	return async_t::public_key_t(_start_key++);
+	return emplace_task(std::forward<async_t::task_t>(task), prerequisites);
 }
 
-void task_queue::wait(const async_t::public_key_t& key)
+void task_queue::wait(const async_t::prereq& prerequisite)
 {
 	while (true)
 	{
 		lock();
-		if (_tasks.find(key.get()) == _tasks.end())
+		if (_tasks.find(prerequisite.key()) == _tasks.end())
 			break; // task is finished and was deleted
 		unlock();
 		std::this_thread::yield();
@@ -316,5 +265,34 @@ void task_queue::wait_all()
 {
 	finish_all_active_tasks();
 }
+
+namespace task_queue_util
+{
+
+// --- async_task ---
+
+async_task::async_task(
+	async_t::task_t&& user_task,
+	std::vector<async_t::prereq> prereqs
+)
+	:
+	task(init_task(std::forward<async_t::task_t>(user_task))),
+	_prerequisites(prereqs)
+{
+	active_flag.test_and_set(std::memory_order_acq_rel); // default to active
+}
+
+inline async_t::task_t async_task::init_task(async_t::task_t&& user_task) noexcept
+{
+	async_t::task_t res([u_task = std::move(user_task), &flag_ref = active_flag]() -> void
+	{
+		u_task();
+		flag_ref.clear(std::memory_order_release);
+	});
+	return res;
+}
+
+}
+
 
 }
