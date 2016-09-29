@@ -131,9 +131,9 @@ public:
 
 	~ref_bucket() noexcept { }
 
-	V& getValue() const { return *_value; }
+	V& value() const { return *_value; }
 
-	const K& getKey() const { return _key; }
+	const K& key() const { return _key; }
 
 	bool operator< (const K& comp) const { return _key < comp; }
 	bool operator< (const ref_bucket& comp) const { return _key < comp._key; }
@@ -158,11 +158,11 @@ public:
 
 	~val_bucket() noexcept { }
 
-	V& getValue() { return _value; }
+	V& value() { return _value; }
 
-	const V& getValue() const { return _value; } // tmp cref
+	const V& value() const { return _value; } // tmp cref
 
-	const K& getKey() const { return _key; }
+	const K& key() const { return _key; }
 
 	bool operator< (const K& comp) const { return _key < comp; }
 	bool operator< (const val_bucket& comp) const { return _key < comp._key; }
@@ -203,7 +203,7 @@ template<typename K, typename V> ref_bucket<K, V>& ref_bucket<K, V>::operator= (
 	if (this != std::addressof(other))
 	{
 		_key = other._key;
-		_value = std::make_unique<V>(other.getValue());
+		_value = std::make_unique<V>(other.value());
 	}
 	return *this;
 }
@@ -248,7 +248,7 @@ template<typename K, typename V> void vec_map<K, V>::insert(
 )
 {
 	// bucket insert
-	_buckets.emplace_back(bucket.getKey(), bucket.getValue());
+	_buckets.emplace_back(bucket.key(), bucket.value());
 	_is_sorted = false;
 }
 
@@ -290,7 +290,7 @@ template<typename K, typename V> V& vec_map<K, V>::operator[] (const K& key)
 {
 	// may crash or return wrong value if used with invalid key
 	if (!_is_sorted) sort();
-	return std::lower_bound(_buckets.begin(), _buckets.end(), key)->getValue();
+	return std::lower_bound(_buckets.begin(), _buckets.end(), key)->value();
 }
 
 template<typename K, typename V> V& vec_map<K, V>::at(const K& key)
@@ -298,8 +298,8 @@ template<typename K, typename V> V& vec_map<K, V>::at(const K& key)
 	// should throw properly if used with invalid key
 	if (!_is_sorted) sort();
 	auto it = std::lower_bound(_buckets.begin(), _buckets.end(), key);
-	if (it != _buckets.end() && it->getKey() == key)
-		return it->getValue();
+	if (it != _buckets.end() && it->key() == key)
+		return it->value();
 	else
 		throw std::out_of_range("vec_map key was not valid!");
 }

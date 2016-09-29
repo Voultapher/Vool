@@ -145,7 +145,7 @@ void test_Vecmap()
 
 	// capacity tests
 	{
-		auto frontKey = vecMap.begin()->getKey();
+		auto frontKey = vecMap.begin()->key();
 		vecMap.erase(frontKey); // key erase
 		vecMap.insert(frontKey, value);
 		if (vecMap.is_sorted())
