@@ -79,7 +79,7 @@ void test_TaskQueue()
 
 			val_t val = {};
 			for (val_t i = 0; i < testSize; ++i)
-				val += static_cast<std::remove_volatile_t<val_t>>(sqrt(i));
+				val += val_t(sqrt(i));
 		});
 
 		task_queue tq;
@@ -284,10 +284,11 @@ void test_TaskQueue()
 			// B
 			auto conditionB = tq.add_task(
 				[&sums, &groov, groovle, size = vecs.size()]()
-			{
-				groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
-			},
-				conditionsA);
+				{
+					groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
+				},
+				conditionsA
+			);
 
 			// C
 			std::vector<async_t::prereq> conditionsC;
@@ -334,14 +335,14 @@ void test_TaskQueue()
 
 	{
 #ifdef NDEBUG
-		size_t heavyRepeatCount = 500;
+	unsigned int heavyRepeatCount = 500;
 #else
-		size_t heavyRepeatCount = 5;
+	unsigned int heavyRepeatCount = 5;
 #endif
 
 		// repeat the complex test many times to catch rare multithreaded related bugs
-		for (size_t i = 0; i < heavyRepeatCount; ++i)
-			heavyTest(static_cast<unsigned int>(i) * 1445);
+		for (unsigned int i = 0; i < heavyRepeatCount; ++i)
+			heavyTest(i * 1445);
 	}
 
 }
