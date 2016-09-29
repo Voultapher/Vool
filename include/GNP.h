@@ -34,7 +34,7 @@ public:
 
 	~gnuplot() noexcept;
 
-	template<typename... Ts> void operator() (const Ts&...);
+	template<typename... Ts> void operator() (Ts&&...);
 
 	void operator<< (std::string);
 
@@ -145,9 +145,9 @@ template<typename T> plot_data_2D<T>::plot_data_2D(
 
 // --- gnuplot ---
 
-template<typename... Ts> void gnuplot::operator() (const Ts&... args)
+template<typename... Ts> void gnuplot::operator() (Ts&&... args)
 {
-	auto command = gnuplot_util::concatenate(args...);
+	auto command = gnuplot_util::concatenate(std::forward<Ts>(args)...);
 	command += "\n";
 
 	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
