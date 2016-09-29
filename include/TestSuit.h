@@ -30,7 +30,7 @@ namespace test_suit_util
 	using point_t = plot_t::point_t;
 	using graph_t = std::vector<plot_t>;
 
-	struct result_t;
+	class result_t;
 }
 
 struct suit_config
@@ -42,11 +42,11 @@ struct suit_config
 	bool persistent;
 	size_t steps;
 	size_t repetitions;
-	std::string gnuplot_path;
+	gnuplot::filepath_t gnuplot_path;
+	gnuplot::filepath_t output_filepath;
+	gnuplot::filepath_t filename;
 	std::string x_name;
 	std::string y_name;
-	std::string output_filepath;
-	std::string filename;
 
 	explicit suit_config()
 		: x_res(1000), y_res(500),
@@ -55,9 +55,10 @@ struct suit_config
 		persistent(false),
 		steps(20),
 		repetitions(3),
-		gnuplot_path("C:\\ProgramData\\gnuplot\\bin"),
-		x_name("Size"), y_name("Full Time in nanoseconds"),
-		output_filepath(""), filename("Result")
+		gnuplot_path("C:\\ProgramData\\gnuplot\\bin\\gnuplot"),
+		output_filepath(""),
+		filename("Result"),
+		x_name("Size"), y_name("Full Time in nanoseconds")
 	{}
 };
 
@@ -361,7 +362,7 @@ template<typename... Ts> test_suit<Ts...>::test_suit(
 ) :
 	_suit_config(suit_configuration),
 	_categorys(std::forward<Ts>(categorys)...),
-	_gnuplot(_suit_config.gnuplot_path, _suit_config.persistent) // may throw
+	_gnuplot(_suit_config.gnuplot_path)
 {
 	_gnuplot.set_terminal_window(_suit_config.x_res, _suit_config.y_res);
 
@@ -424,17 +425,23 @@ template<typename... Ts> void test_suit<Ts...>::pipe_result(
 	if (result.graph.size() == 0)
 		return;
 
+	std::string filename(_suit_config.output_filepath + result.category_name + ".dat");
+
 	_gnuplot.write_and_plot(
 		result.graph,
-		_suit_config.output_filepath + result.category_name + ".dat");
+		filename.c_str()
+	);
 
 	if (_suit_config.png_output)
 	{
 		_gnuplot.set_terminal_png(_suit_config.x_res, _suit_config.y_res);
-		_gnuplot.set_png_filename(_suit_config.filename + result.category_name);
+		_gnuplot.set_png_filename(
+			std::string(_suit_config.filename + result.category_name).c_str()
+		);
 		_gnuplot.plot(
 			result.graph,
-			_suit_config.output_filepath + result.category_name + ".dat");
+			filename.c_str()
+		);
 	}
 }
 

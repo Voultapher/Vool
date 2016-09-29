@@ -19,10 +19,10 @@
 namespace vool
 {
 
-gnuplot::gnuplot(std::string gnuplot_path, const bool persist)
+gnuplot::gnuplot(filepath_t filepath)
 {
-	gnuplot_path += persist ? "\\gnuplot -persist" : "\\gnuplot";
-	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
+	//gnuplot_path += "\\gnuplot -persist";
+	_gnuplot_pipe = PIPE_OPEN(filepath, "w");
 
 	if (_gnuplot_pipe == NULL) // PIPE_OPEN itself failed
 		throw std::exception("PIPE_OPEN failed");
@@ -30,7 +30,7 @@ gnuplot::gnuplot(std::string gnuplot_path, const bool persist)
 	if (PIPE_CLOSE(_gnuplot_pipe) != 0) // command failed
 		throw std::exception("gnuplot filepath not found");
 
-	_gnuplot_pipe = PIPE_OPEN(gnuplot_path.c_str(), "w");
+	_gnuplot_pipe = PIPE_OPEN(filepath, "w");
 }
 
 gnuplot::gnuplot(gnuplot&& other) :
@@ -100,10 +100,10 @@ void gnuplot::set_terminal_window(
 	);
 }
 
-void gnuplot::set_png_filename(const std::string& filename)
+void gnuplot::set_png_filename(filepath_t filename)
 {
 	// subdirectorys do not work
-	operator()("set output \"" + filename + ".png\"");
+	operator()("set output \"", filename, ".png\"");
 }
 
 void gnuplot::add_linestyle(

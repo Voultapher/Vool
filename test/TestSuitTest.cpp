@@ -26,7 +26,7 @@ void test_TestSuit()
 	// test Result, test, test_category and test_suit
 	{
 		suit_config suit_configuration;
-		suit_configuration.gnuplot_path = "C:\\ProgramData\\gnuplot\\bin";
+		suit_configuration.gnuplot_path = "C:\\ProgramData\\gnuplot\\bin\\gnuplot";
 		suit_configuration.output_filepath = "data\\";
 		suit_configuration.filename = "TST_";
 		suit_configuration.warnings_active = true;

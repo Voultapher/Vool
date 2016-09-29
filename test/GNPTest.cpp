@@ -22,14 +22,11 @@ namespace tests
 
 void test_GNP()
 {
-	const std::string gnuplot_path = "C:\\ProgramData\\gnuplot\\bin";
-
 	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
 	if (converted != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");
 
-	gnuplot gnpOpen(gnuplot_path, true); // stay open until user closes gnuplot
-	gnuplot gnp(gnuplot_path, false); // close after task termination
+	gnuplot gnp("C:\\ProgramData\\gnuplot\\bin\\gnuplot");
 
 	gnp << "set samples 10"; // operator<< call
 	gnp("set samples ", 150); // operator() call

@@ -22,7 +22,9 @@ template<typename T> struct plot_data_2D;
 class gnuplot
 {
 public:
-	explicit gnuplot(std::string, const bool = true);
+	using filepath_t = const char*;
+
+	explicit gnuplot(filepath_t);
 
 	gnuplot(const gnuplot&) = delete;
 	gnuplot(gnuplot&&);
@@ -46,7 +48,7 @@ public:
 
 	void set_terminal_window(const uint32_t, const uint32_t);
 
-	void set_png_filename(const std::string&);
+	void set_png_filename(filepath_t);
 
 	void add_linestyle(
 		const uint32_t,
@@ -61,17 +63,17 @@ public:
 
 	template<typename T> void write_and_plot(
 		const std::vector<plot_data_2D<T>>&,
-		const std::string& = "data.dat"
+		filepath_t
 	);
 
 	template<typename T> void write(
 		const std::vector<plot_data_2D<T>>&,
-		const std::string& = "data.dat"
+		filepath_t
 	);
 
 	template<typename T> void plot(
 		const std::vector<plot_data_2D<T>>&,
-		const std::string&
+		filepath_t
 	);
 
 private:
@@ -151,7 +153,7 @@ template<typename... Ts> void gnuplot::operator() (const Ts&... args)
 
 template<typename T> void gnuplot::write_and_plot(
 	const std::vector<plot_data_2D<T>>& plots,
-	const std::string& filepath
+	filepath_t filepath
 )
 {
 	write(plots, filepath);
@@ -160,7 +162,7 @@ template<typename T> void gnuplot::write_and_plot(
 
 template<typename T> void gnuplot::write(
 	const std::vector<plot_data_2D<T>>& plots,
-	const std::string& filepath
+	filepath_t filepath
 )
 {
 	if (plots.size() == 0)
@@ -171,7 +173,7 @@ template<typename T> void gnuplot::write(
 
 	if (!std::ifstream(filepath).good())
 	{
-		std::cerr << "File \"" << filepath.c_str() << "\" not found!\n";
+		std::cerr << "File \"" << filepath << "\" not found!\n";
 		return;
 	}
 
@@ -190,17 +192,18 @@ template<typename T> void gnuplot::write(
 
 template<typename T> void gnuplot::plot(
 	const std::vector<plot_data_2D<T>>& plots,
-	const std::string& filepath
+	filepath_t filepath
 )
 {
 	if (!std::ifstream(filepath).good())
 	{
-		std::cerr << "File \"" << filepath.c_str() << "\" not found!\n";
+		std::cerr << "File \"" << filepath << "\" not found!\n";
 		return;
 	}
 
 	// create command and push it to gnuplot
-	std::string command = "plot '" + filepath + "' ";
+	std::string command = util::convert_to_string_v("plot '", filepath, "' ");
+
 	for (const auto& plot : plots)
 	{
 		command += util::convert_to_string_v
