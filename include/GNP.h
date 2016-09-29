@@ -105,26 +105,30 @@ private:
 
 // ----- IMPLEMENTATION -----
 
-namespace util
+namespace gnuplot_util
 {
 	// automatic string conversion from variadic pack
-	inline std::string convert(const std::string& arg) { return arg; }
-	inline std::string convert(const char* arg) { return arg; }
+	inline void cat(const std::string& arg, std::string& ret) { ret += arg; }
+	inline void cat(const char* arg, std::string& ret) { ret += arg; }
 
 	// overload if T is not an string or const char*
-	template<typename T> std::string convert(const T& arg)
+	template<typename T> void cat(const T& arg, std::string& ret)
 	{
-		return std::to_string(arg);
+		ret += std::to_string(arg);
 	}
 
-	template<typename... Ts> std::string convert_to_string_v(const Ts&... args)
+	template<typename... Ts> std::string concatenate(Ts&&... args)
 	{
 		std::string command;
-		auto wFunc = [&command](const auto& args)
+		auto wFunc = [&command](auto&& arg)
 		{
-			command += convert(args);
+			cat(std::forward<decltype(arg)>(arg), command);
 		};
-		static_cast<void>(std::initializer_list<int> { 0, (wFunc(args), 0)... });
+
+		static_cast<void>(std::initializer_list<int>
+		{
+			0, (wFunc(std::forward<Ts>(args)), 0)...
+		});
 		return command;
 	}
 }
@@ -143,8 +147,7 @@ template<typename T> plot_data_2D<T>::plot_data_2D(
 
 template<typename... Ts> void gnuplot::operator() (const Ts&... args)
 {
-	// send pack of elements that if needed will get converted to string command to gnuplot
-	auto command = util::convert_to_string_v(args...);
+	auto command = gnuplot_util::concatenate(args...);
 	command += "\n";
 
 	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
@@ -179,10 +182,10 @@ template<typename T> void gnuplot::write(
 
 	for (const auto& plot : plots)
 	{
-		plot_file << util::convert_to_string_v("#(index ", plot.index(), ")\n");
+		plot_file << gnuplot_util::concatenate("#(index ", plot.index(), ")\n");
 		plot_file << "# X Y\n";
 		for (const auto point : plot.points())
-			plot_file << util::convert_to_string_v
+			plot_file << gnuplot_util::concatenate
 			("  ", point.first, " ", point.second, "\n");
 
 		plot_file << "\n\n";
@@ -202,11 +205,11 @@ template<typename T> void gnuplot::plot(
 	}
 
 	// create command and push it to gnuplot
-	std::string command = util::convert_to_string_v("plot '", filepath, "' ");
+	std::string command = gnuplot_util::concatenate("plot '", filepath, "' ");
 
 	for (const auto& plot : plots)
 	{
-		command += util::convert_to_string_v
+		command += gnuplot_util::concatenate
 		(
 			"index ", plot.index(),
 			" t '", plot.name(),

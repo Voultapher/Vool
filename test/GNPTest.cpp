@@ -22,8 +22,8 @@ namespace tests
 
 void test_GNP()
 {
-	std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
-	if (converted != "cat 12.000000 3.300000 man")
+	std::string cat = gnuplot_util::concatenate("cat ", 1, 2.f, " ", 3.3, " man");
+	if (cat != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");
 
 	gnuplot gnp("C:\\ProgramData\\gnuplot\\bin\\gnuplot");
