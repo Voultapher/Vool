@@ -28,22 +28,22 @@ void test_GNP()
 
 	gnuplot gnp("C:\\ProgramData\\gnuplot\\bin\\gnuplot");
 
-	gnp << "set samples 10"; // operator<< call
-	gnp("set samples ", 150); // operator() call
+	gnp << "set samples 10";
+	gnp("set samples ", 150);
 
-	gnp.name_axis("A", "B"); // set axis names
-	gnp.set_terminal_window(1200, 500); // set terminal to window
-	gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f); // add lineStyle
-	gnp.add_grid(); // add grid
+	gnp.name_axis("A", "B");
+	gnp.set_terminal_window(1200, 500);
+	gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+	gnp.add_grid();
 
 	gnp << "plot sin(x) ls 1"; // test plot, should open window and close it again
 
-	gnp.set_terminal_png(1200, 500); // change terminal to output png
-	gnp.set_png_filename("TestGraph"); // Name of .png that is output
+	gnp.set_terminal_png(1200, 500);
+	gnp.set_png_filename("TestGraph");
 
 	gnp << "plot sin(x) ls 1"; // should save TestGraph.png in source directory
 
-	gnp.set_png_filename("TestDataPlot"); // Name of .png that is saved
+	gnp.set_png_filename("TestDataPlot");
 	std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };
 	std::vector<plot_data_2D<double>> plot;
 	plot.emplace_back(dataPoints, 0, "Test Points");
