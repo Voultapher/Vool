@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <memory>
 
 namespace vool
 {
@@ -123,12 +124,12 @@ public:
 	ref_bucket(const K&, const V&);
 
 	ref_bucket(const ref_bucket&);
-	ref_bucket(ref_bucket&&);
+	ref_bucket(ref_bucket&&) = default;
 
 	ref_bucket& operator= (const ref_bucket&);
-	ref_bucket& operator= (ref_bucket&&);
+	ref_bucket& operator= (ref_bucket&&) = default;
 
-	~ref_bucket() noexcept;
+	~ref_bucket() noexcept { }
 
 	V& getValue() const { return *_value; }
 
@@ -139,7 +140,7 @@ public:
 
 private:
 	K _key;
-	V* _value; // more consitent performance for sort and find
+	std::unique_ptr<V> _value; // more consitent performance for sort and find
 };
 
 template<typename K, typename V> class val_bucket
@@ -185,24 +186,15 @@ template<typename K, typename V> ref_bucket<K, V>::ref_bucket(
 	const V& v
 ) :
 	_key(k),
-	_value(new V(v))
+	_value(std::make_unique<V>(v))
 { }
 
 template<typename K, typename V> ref_bucket<K, V>::ref_bucket(
 	const ref_bucket<K, V>& other
 ) :
 	_key(other._key),
-	_value(new V(*other._value))
+	_value(std::make_unique<V>(*other._value))
 { }
-
-template<typename K, typename V> ref_bucket<K, V>::ref_bucket(
-	ref_bucket<K, V>&& other
-) :
-	_key(std::move(other._key)),
-	_value(other._value) // no new alloc needed
-{
-	other._value = nullptr;
-}
 
 template<typename K, typename V> ref_bucket<K, V>& ref_bucket<K, V>::operator= (
 	const ref_bucket<K, V>& other
@@ -211,29 +203,12 @@ template<typename K, typename V> ref_bucket<K, V>& ref_bucket<K, V>::operator= (
 	if (this != std::addressof(other))
 	{
 		_key = other._key;
-		_value = new V(other.getValue());
+		_value = std::make_unique<V>(other.getValue());
 	}
 	return *this;
 }
 
-template<typename K, typename V> ref_bucket<K, V>& ref_bucket<K, V>::operator= (
-	ref_bucket<K, V>&& other
-)
-{
-	if (this != std::addressof(other))
-	{
-		_key = std::move(other._key);
-		_value = other._value; // no new alloc needed
-		other._value = nullptr;
-	}
-	return *this;
-}
-
-template<typename K, typename V> ref_bucket<K, V>::~ref_bucket() noexcept
-{
-	delete _value;
-}
-
+// --- val_bucket ---
 
 template<typename K, typename V> val_bucket<K, V>::val_bucket(
 	const K& key,
