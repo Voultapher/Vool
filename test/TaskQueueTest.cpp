@@ -79,7 +79,7 @@ void test_TaskQueue()
 
 			val_t val = {};
 			for (val_t i = 0; i < testSize; ++i)
-				val += val_t(sqrt(i));
+				val += i % 5;
 		});
 
 		task_queue tq;
