@@ -123,7 +123,7 @@ void task_queue::queue_loop()
 	{
 		relevant_tasks_keys.clear();
 
-		auto lock = task_queue_util::atomic_lock(_sync);
+		task_queue_util::atomic_lock lock(_sync);
 
 		launch_unstarted(relevant_tasks_keys);
 
@@ -151,7 +151,7 @@ async_t::prereq task_queue::emplace_task(
 	std::vector<async_t::prereq> prerequisites
 )
 {
-	auto lock = task_queue_util::atomic_lock(_sync);
+	task_queue_util::atomic_lock lock(_sync);
 
 	if (prerequisites.size() > 0)
 		remove_finished_prerequisites(prerequisites);
@@ -176,7 +176,7 @@ void task_queue::finish_all_active_tasks()
 	while (true)
 	{
 		// wait until all tasks are finished
-		auto lock = task_queue_util::atomic_lock(_sync);
+		task_queue_util::atomic_lock lock(_sync);
 
 		if (_tasks.size() == 0)
 			break;
@@ -238,7 +238,7 @@ void task_queue::wait(const async_t::prereq& prerequisite)
 {
 	while (true)
 	{
-		auto lock = task_queue_util::atomic_lock(_sync);
+		task_queue_util::atomic_lock lock(_sync);
 
 		if (_tasks.find(prerequisite.key()) == _tasks.end())
 			break; // task is finished and was deleted
