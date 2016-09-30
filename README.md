@@ -90,7 +90,7 @@ suit.render_results();
 
 ###TaskQueue.h
 Smart multithreading helper, designed for small overhead  
-Internally using std::atomic_flag as synchronization primitive  
+Internally using `std::atomic_flag` as synchronization primitive  
 Tasks can be added from different threads
 
 ```cpp
