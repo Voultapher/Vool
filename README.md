@@ -10,11 +10,11 @@ A collection of c++ modules, that are build for cross-platform usage, small code
 
 C++14 compliant compiler. Code is tested using MSVC and Clang. Should work cross-platform.
 
-GNP requires gnuplot to be installed on the system and that its location is specified in GNPTest.h
+GNP requires gnuplot to be installed on the system and that its location is specified when constructing `vool::gnuplot`.
 
 ### Installing
 
-Include "include" folder into your project and include wanted modules
+Include "include" folder into your project and `#include` wanted modules
 
 Example:
 
@@ -26,8 +26,6 @@ Example:
 
 Easiest way is to download the entire project, compile it and take a look at main() in Source.cpp.
 
-Make sure that the main folder is included, so that the unit tests can include the needed header files.
-
 ## Features
 
 ###Vecmap.h
@@ -35,76 +33,84 @@ A key value container built on top of std::vector
 For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
 ```
-vool::vec_map<K, V> vecMap(static_cast<size_t>(1e6)); // construction and reserve
-vecMap.insert(key, value); // key value insertion
-V retValue = vecMap[key]; // value lookup using binary search
+vool::vec_map<K, V> map;
+map.insert(key, value);
+V lookup = map[key]; // value lookup using binary search
 ```
 
 ###GNP.h
 A gnuplot pipe interface, built for convenience. Features include:
 * Easy string concatenation
 * Simple presets for live window or png output
-* Ploting data using custom PlotData2D struct as data representation
+* Ploting data using `vool::plot_data_2D` struct as data representation
 
 ```
-const std::string gnuplotPath = "C:\\ProgramData\\gnuplot\\bin";
+vool::gnuplot::filepath_t gnuplot_filepath = "C:\\ProgramData\\gnuplot\\bin\\gnuplot";
+vool::gnuplot gnp(gnuplot_filepath);
 
-std::string converted = util::convert_to_string_v("cat ", 1, 2.f, " ", 3.3, " man");
+gnp("set samples 100");
+gnp.name_axis("A", "B");
+gnp.set_terminal_window(1200, 500);
+gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
+gnp.add_grid();
 
-Gnuplot gnp(gnuplotPath, false); // close after task termination
+gnp("plot sin(x) ls 1"); // should open window and display plot of sin(x)
 
-gnp.setAxis("A", "B"); // set axis names
-gnp.setWindowMode(1200, 500); // set terminal to window
-gnp.addLineStyle(1, "#FF5A62", 2, 3, 5, 1.5f); // add lineStyle
-gnp.addGrid(); // add grid
+gnp.set_terminal_png(1200, 500);
+gnp.set_png_filename("TestGraph");
 
-std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };
-std::vector<PlotData2D<double>> plotData;
-plotData.emplace_back(dataPoints, 1, 0, "Test Points");
-gnp.plotData(plotData, "PlotResults\\PlotData\\GNPTestData.dat");
+gnp("plot sin(x) ls 1"); // should save plot of sin(x) as png file
 ```
 
 ###TestSuit.h
 Benchmarking tool using GNP to visualize its results.
 
 ```
-size_t testSize = 1e4;
+size_t size = 1000;
 
-auto test = vool::createTest("vec build", [&simpleVec](const size_t size)
-{
-    size_t a = size % 2;
-});
+auto test_vec = vool::make_test("build vec",
+    [](const size_t size)
+    { std::vector<int> v(size); }
+);
 
-auto mainCategory = createTestCategory("Main", test);
+auto test_list = vool::make_test("build list",
+    [](const size_t size)
+    { std::list<int> l(size); }
+);
 
-vool::SuitConfiguration suitConfiguration; // setup Configuration
-suitConfiguration.resultName = "Test Name"; // constomize Configuration
+auto category = vool::make_test_category("build", test_vec, test_list);
 
-auto testSuit = vool::createTestSuit(suitConfiguration, mainCategory);
-testSuit.runAllTests(0, testSize); // run tests in specified range
-testSuit.renderResults(); // use GNP to display results and optionally outuput a png
+vool::suit_config config;
+config.filename = "Tst_";
+
+auto suit = vool::make_test_suit(config, category);
+suit.perform_categorys(0, size);
+suit.render_results();
 ```
 
 ###TaskQueue.h
 Smart multithreading helper, designed for small overhead.
 Internally using std::atomic_flag as synchronization primitive.
+Tasks can be added from different threads.
 
 ```
-task_queue tq;
+{
+vool::task_queue tq;
 
 // add 2 tasks which can execute in parallel
-auto conditionA = tq.add_task([&vecA, simpleFunc]() { simpleFunc(vecA); });
-auto conditionB = tq.add_task([&vecB, simpleFunc]() { simpleFunc(vecB); });
+auto condition_a = tq.add_task([&vecA] { func(vec_a); });
+auto condition_b = tq.add_task([&vecB] { func(vec_b); });
 
 // add a task that should only start as soon as the first 2 are finished
-tq.add_task
-(
-	[&vecA, &vecB, &res, combinedFunc]() // lambda carrying function
-	{
-        combinedFunc(vecA, vecB, res);
-    },
-	{ conditionA, conditionB } // requesites returned from adding task A and B
+tq.add_task(
+	[&vec_a, &vec_b, &res]() { combine(vec_a, vec_b, res) },
+	{ condition_a, condition_b } // requesites returned from adding task A and B
 );
+
+}
+
+// tq now out of scope
+// task_queue destructor should block until all tasks are done
 ```
 
 ## Built With
@@ -121,4 +127,4 @@ Fork and open a pull request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the Apache License 2.0 License - see the [LICENSE.md](LICENSE.md) file for details
