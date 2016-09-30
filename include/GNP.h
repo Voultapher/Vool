@@ -146,7 +146,7 @@ template<typename T> plot_data_2D<T>::plot_data_2D(
 template<typename... Ts> void gnuplot::operator() (Ts&&... args)
 {
 	auto command = gnuplot_util::concatenate(std::forward<Ts>(args)...);
-	command += "\n";
+	//command += "\n";
 
 	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
 	fflush(_gnuplot_pipe);
