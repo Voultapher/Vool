@@ -366,7 +366,7 @@ template<typename... Ts> test_suit<Ts...>::test_suit(
 {
 	_gnuplot.set_terminal_window(_suit_config.x_res, _suit_config.y_res);
 
-	_gnuplot << "set samples 500";
+	_gnuplot("set samples 500");
 	_gnuplot.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
 	_gnuplot.add_linestyle(2, "#2E9ACC", 2, 3, 6, 1.5f);
 	_gnuplot.add_linestyle(3, "#9871FF", 2, 3, 7, 1.5f);

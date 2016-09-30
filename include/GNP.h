@@ -36,8 +36,6 @@ public:
 
 	template<typename... Ts> void operator() (Ts&&...);
 
-	void operator<< (std::string);
-
 	void name_axis(
 		const std::string& = "x-axis",
 		const std::string& = "y-axis",

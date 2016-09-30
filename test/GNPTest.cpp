@@ -22,13 +22,15 @@ namespace tests
 
 void test_GNP()
 {
+	gnuplot::filepath_t gnuplot_filepath = "C:\\ProgramData\\gnuplot\\bin\\gnuplot";
+
 	std::string cat = gnuplot_util::concatenate("cat ", 1, 2.f, " ", 3.3, " man");
 	if (cat != "cat 12.000000 3.300000 man")
 		throw std::exception("convert_to_string_v error");
 
-	gnuplot gnp("C:\\ProgramData\\gnuplot\\bin\\gnuplot");
+	gnuplot gnp(gnuplot_filepath);
 
-	gnp << "set samples 10";
+	gnp("set samples 10");
 	gnp("set samples ", 150);
 
 	gnp.name_axis("A", "B");
@@ -36,12 +38,12 @@ void test_GNP()
 	gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
 	gnp.add_grid();
 
-	gnp << "plot sin(x) ls 1"; // test plot, should open window and close it again
+	gnp("plot sin(x) ls 1"); // test plot, should open window and close it again
 
 	gnp.set_terminal_png(1200, 500);
 	gnp.set_png_filename("TestGraph");
 
-	gnp << "plot sin(x) ls 1"; // should save TestGraph.png in source directory
+	gnp("plot sin(x) ls 1"); // should save TestGraph.png in source directory
 
 	gnp.set_png_filename("TestDataPlot");
 	std::vector<std::pair<double, double>> dataPoints = { {1,4}, {3,2}, {4,7} };

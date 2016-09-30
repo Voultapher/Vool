@@ -58,15 +58,6 @@ gnuplot::~gnuplot() noexcept
 	}
 }
 
-void gnuplot::operator<< (std::string command)
-{
-	// send direct string command to gnuplot
-	command += "\n";
-
-	fprintf(_gnuplot_pipe, "%s\n", command.c_str());
-	fflush(_gnuplot_pipe);
-}
-
 void gnuplot::name_axis(
 	const std::string& x_label,
 	const std::string& y_label,
