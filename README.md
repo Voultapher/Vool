@@ -47,7 +47,8 @@ A gnuplot pipe interface, built for convenience. Features include:
 vool::gnuplot::filepath_t gnuplot_filepath = "C:\\ProgramData\\gnuplot\\bin\\gnuplot";
 vool::gnuplot gnp(gnuplot_filepath);
 
-gnp("set samples 100");
+uint32_t samples = 100;
+gnp("set samples", samples);
 gnp.name_axis("A", "B");
 gnp.set_terminal_window(1200, 500);
 gnp.add_linestyle(1, "#FF5A62", 2, 3, 5, 1.5f);
