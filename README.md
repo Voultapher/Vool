@@ -13,10 +13,11 @@ GNP requires gnuplot to be installed on the system and that its location is spec
 
 ### Installing
 
-Include "include" folder into your project and `#include` wanted modules  
+Include "include" folder into your project and `#include` wanted modules
+
 Example:
 
-```
+```cpp
 #include "Vecmap.h"
 ```
 
@@ -30,7 +31,7 @@ Easiest way is to download the entire project, compile it and take a look at mai
 A key value container built on top of std::vector  
 For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
-```
+```cpp
 vool::vec_map<K, V> map;
 map.insert(key, value);
 V lookup = map[key]; // value lookup using binary search
@@ -42,7 +43,7 @@ A gnuplot pipe interface, built for convenience. Features include:
 * Simple presets for live window or png output
 * Ploting data using `vool::plot_data_2D` struct as data representation
 
-```
+```cpp
 vool::gnuplot::filepath_t gnuplot_filepath = "C:\\ProgramData\\gnuplot\\bin\\gnuplot";
 vool::gnuplot gnp(gnuplot_filepath);
 
@@ -63,7 +64,7 @@ gnp("plot sin(x) ls 1"); // should save plot of sin(x) as png file
 ###TestSuit.h
 Benchmarking tool using GNP to visualize its results
 
-```
+```cpp
 size_t size = 1000;
 
 auto test_vec = vool::make_test("build vec",
@@ -91,7 +92,7 @@ Smart multithreading helper, designed for small overhead
 Internally using std::atomic_flag as synchronization primitive  
 Tasks can be added from different threads
 
-```
+```cpp
 {
 vool::task_queue tq;
 
