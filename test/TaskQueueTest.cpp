@@ -1,20 +1,24 @@
 /*
 * Vool - Unit tests for task_queue
 *
-* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+* Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+* This code is licensed under the Apache License 2.0 (https://opensource.org/licenses/Apache-2.0)
 */
-#pragma once
 
-#include "TaskQueue.h"
+#include "AllTests.h"
+
+#include <TaskQueue.h>
 
 #include <vector>
 #include <string>
-#include <stdexcept>
 #include <random>
+#include <exception>
 
 namespace vool
+{
+
+namespace tests
 {
 
 void test_TaskQueue()
@@ -57,8 +61,8 @@ void test_TaskQueue()
 			tq.add_task
 			(
 				[&vecA, &vecB, &res, combinedFunc]()
-				{ combinedFunc(vecA, vecB, res); }, // lambda body
-				{ conditionA, conditionB } // requesites returned from adding task A and B
+			{ combinedFunc(vecA, vecB, res); }, // lambda body
+			{ conditionA, conditionB } // requesites returned from adding task A and B
 			);
 		}
 
@@ -75,7 +79,7 @@ void test_TaskQueue()
 
 			val_t val = {};
 			for (val_t i = 0; i < testSize; ++i)
-				val += static_cast<std::remove_volatile_t<val_t>>(sqrt(i));
+				val += i % 5;
 		});
 
 		task_queue tq;
@@ -89,7 +93,7 @@ void test_TaskQueue()
 		task_queue tq;
 
 		async_t::key_t evil(1);
-		tq.wait(async_t::public_key_t(evil));
+		tq.wait(async_t::prereq(evil));
 
 		// this should not block
 		// nonexisting prerequisites usually indicate an allready finished task
@@ -171,7 +175,7 @@ void test_TaskQueue()
 
 		size_t size = 1000;
 		std::vector<int> v;
-		async_t::public_key_t condition(async_t::key_t(0));
+		async_t::prereq condition(async_t::key_t(0));
 
 		std::promise<void> sync;
 
@@ -208,8 +212,8 @@ void test_TaskQueue()
 		// create vector filled with vectors filled with random values
 		std::vector<std::vector<element_t>> rndVecs;
 		{
-			size_t count = 64; // amount of vectors
-			size_t size = 500; // amount of values per vector
+			size_t count = 128; // amount of vectors
+			size_t size = 256; // amount of values per vector
 
 			rndVecs.reserve(count);
 
@@ -272,7 +276,7 @@ void test_TaskQueue()
 			sums.resize(vecs.size() * 2);
 			auto sums_it = sums.begin();
 
-			std::vector<async_t::public_key_t> conditionsA;
+			std::vector<async_t::prereq> conditionsA;
 			for (const auto& vec : vecs)
 				conditionsA.push_back(tq.add_task(
 					[&vec, sum, it = sums_it++]() { *it = sum(vec); }));
@@ -280,19 +284,20 @@ void test_TaskQueue()
 			// B
 			auto conditionB = tq.add_task(
 				[&sums, &groov, groovle, size = vecs.size()]()
-				{ 
+				{
 					groov = groovle(std::vector<sum_t>(sums.begin(), sums.begin() + size));
 				},
-				conditionsA);
+				conditionsA
+			);
 
 			// C
-			std::vector<async_t::public_key_t> conditionsC;
+			std::vector<async_t::prereq> conditionsC;
 			for (auto& vec : vecs)
 				conditionsC.push_back(tq.add_task(([&vec, &groov, increaseGroov]()
 			{ increaseGroov(vec, groov); }), { conditionB }));
 
 			// D
-			std::vector<async_t::public_key_t> conditionsD;
+			std::vector<async_t::prereq> conditionsD;
 			for (const auto& vec : vecs)
 				conditionsD.push_back(tq.add_task(
 					[&vec, sum, it = sums_it++]() { *it = sum(vec); }, conditionsC));
@@ -330,15 +335,17 @@ void test_TaskQueue()
 
 	{
 #ifdef NDEBUG
-		size_t heavyRepeatCount = 500;
+	unsigned int heavyRepeatCount = 500;
 #else
-		size_t heavyRepeatCount = 5;
+	unsigned int heavyRepeatCount = 5;
 #endif
 
 		// repeat the complex test many times to catch rare multithreaded related bugs
-		for (size_t i = 0; i < heavyRepeatCount; ++i)
-			heavyTest(static_cast<unsigned int>(i) * 1445);
+		for (unsigned int i = 0; i < heavyRepeatCount; ++i)
+			heavyTest(i * 1445);
 	}
+
+}
 
 }
 

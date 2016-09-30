@@ -1,38 +1,45 @@
 /*
-* Vool - Unit tests for Vecmap, should basically call every member function and test for expected behaviour
+* Vool - Unit tests for vec_map
 *
-* Copyright (C) 2016 by Lukas Bergdoll - www.lukas-bergdoll.net
+* Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
-* This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+* This code is licensed under the Apache License 2.0 (https://opensource.org/licenses/Apache-2.0)
 */
-#pragma once
 
-#include <cstdio>
-#include <vector>
+#include "AllTests.h"
 
 #include <Vecmap.h>
+
+#include <vector>
+#include <exception>
 
 namespace vool
 {
 
-namespace test
+namespace tests
 {
-	struct BigData
-	{
-		static const size_t size = 40;
-		using array_t = int;
-		array_t sampleArray[size];
-	};
-}
+
+struct BigData
+{
+	using array_t = int;
+	static const size_t size = (sizeof(size_t) * 6) / sizeof(array_t);
+	array_t sampleArray[size];
+};
+
 
 void test_Vecmap()
 {
 	// configuration
 	using K = size_t;
-	using V = test::BigData;
+	using V = BigData;
 	size_t containerSize = static_cast<K>(1e4);
 
-	// Test
+	static_assert(std::is_same<
+			vool::vec_map<K, V>::bucket_t,
+			vool::vec_map_util::ref_bucket<K, V>
+		>::value, "vec_map bucket selection fail!");
+
+
 	V value; // custom value type
 	value.sampleArray[0] = 33;
 
@@ -96,7 +103,10 @@ void test_Vecmap()
 			keyAndValueVec.push_back(std::make_pair(key, value));
 
 		vool::vec_map<K, V> range;
-		range.insert(keyAndValueVec.begin(), keyAndValueVec.end()); // key value insert
+		std::for_each(keyAndValueVec.begin(), keyAndValueVec.end(),
+			[&range](const auto& kvPair)
+			{ range.insert(kvPair.first, kvPair.second); }
+		);
 		if (range.size() != keyAndValueVec.size())
 			throw std::exception("key value range insert error");
 
@@ -135,7 +145,7 @@ void test_Vecmap()
 
 	// capacity tests
 	{
-		auto frontKey = vecMap.begin()->getKey();
+		auto frontKey = vecMap.begin()->key();
 		vecMap.erase(frontKey); // key erase
 		vecMap.insert(frontKey, value);
 		if (vecMap.is_sorted())
@@ -152,6 +162,8 @@ void test_Vecmap()
 		if (vecMapCopy.size() != 0)
 			throw std::exception("clear error");
 	}
+
+}
 
 }
 
