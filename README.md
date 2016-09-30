@@ -98,8 +98,8 @@ Tasks can be added from different threads
 vool::task_queue tq;
 
 // add 2 tasks which can execute in parallel
-auto condition_a = tq.add_task([&vecA] { func(vec_a); });
-auto condition_b = tq.add_task([&vecB] { func(vec_b); });
+auto condition_a = tq.add_task([&vec_a] { func(vec_a); });
+auto condition_b = tq.add_task([&vec_b] { func(vec_b); });
 
 // add a task that should only start as soon as the first 2 are finished
 tq.add_task(
