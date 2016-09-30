@@ -105,7 +105,6 @@ tq.add_task(
 	[&vec_a, &vec_b, &res]() { combine(vec_a, vec_b, res) },
 	{ condition_a, condition_b } // requesites returned from adding task A and B
 );
-
 }
 
 // tq now out of scope
