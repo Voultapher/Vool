@@ -8,14 +8,12 @@ A collection of c++ modules, that are build for cross-platform usage, small code
 
 ### Prerequisities
 
-C++14 compliant compiler. Code is tested using MSVC and Clang. Should work cross-platform
-
+C++14 compliant compiler. Code is tested using MSVC and Clang. Should work cross-platform  
 GNP requires gnuplot to be installed on the system and that its location is specified when constructing `vool::gnuplot`
 
 ### Installing
 
-Include "include" folder into your project and `#include` wanted modules
-
+Include "include" folder into your project and `#include` wanted modules  
 Example:
 
 ```
@@ -29,8 +27,7 @@ Easiest way is to download the entire project, compile it and take a look at mai
 ## Features
 
 ###Vecmap.h
-A key value container built on top of std::vector
-
+A key value container built on top of std::vector  
 For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
 ```
@@ -90,10 +87,8 @@ suit.render_results();
 ```
 
 ###TaskQueue.h
-Smart multithreading helper, designed for small overhead
-
-Internally using std::atomic_flag as synchronization primitive
-
+Smart multithreading helper, designed for small overhead  
+Internally using std::atomic_flag as synchronization primitive  
 Tasks can be added from different threads
 
 ```
