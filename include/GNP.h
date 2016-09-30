@@ -106,11 +106,11 @@ private:
 namespace gnuplot_util
 {
 	// automatic string conversion from variadic pack
-	inline void cat(const std::string& arg, std::string& ret) { ret += arg; }
-	inline void cat(const char* arg, std::string& ret) { ret += arg; }
+	inline void cat(std::string& ret, const std::string& arg) { ret += arg; }
+	inline void cat(std::string& ret, const char* arg) { ret += arg; }
 
 	// overload if T is not an string or const char*
-	template<typename T> void cat(const T& arg, std::string& ret)
+	template<typename T> void cat(std::string& ret, const T& arg)
 	{
 		ret += std::to_string(arg);
 	}
@@ -120,7 +120,7 @@ namespace gnuplot_util
 		std::string command;
 		auto wFunc = [&command](auto&& arg)
 		{
-			cat(std::forward<decltype(arg)>(arg), command);
+			cat(command, std::forward<decltype(arg)>(arg));
 		};
 
 		static_cast<void>(std::initializer_list<int>
