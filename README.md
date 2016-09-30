@@ -4,13 +4,13 @@ C++ library
 
 ## Getting Started
 
-A collection of c++ modules, that are build for cross-platform usage, small code footprint and performance.
+A collection of c++ modules, that are build for cross-platform usage, small code footprint and performance
 
 ### Prerequisities
 
-C++14 compliant compiler. Code is tested using MSVC and Clang. Should work cross-platform.
+C++14 compliant compiler. Code is tested using MSVC and Clang. Should work cross-platform
 
-GNP requires gnuplot to be installed on the system and that its location is specified when constructing `vool::gnuplot`.
+GNP requires gnuplot to be installed on the system and that its location is specified when constructing `vool::gnuplot`
 
 ### Installing
 
@@ -24,7 +24,7 @@ Example:
 
 ## Running the tests
 
-Easiest way is to download the entire project, compile it and take a look at main() in Source.cpp.
+Easiest way is to download the entire project, compile it and take a look at main() in test/Main.cpp
 
 ## Features
 
@@ -63,7 +63,7 @@ gnp("plot sin(x) ls 1"); // should save plot of sin(x) as png file
 ```
 
 ###TestSuit.h
-Benchmarking tool using GNP to visualize its results.
+Benchmarking tool using GNP to visualize its results
 
 ```
 size_t size = 1000;
@@ -89,9 +89,9 @@ suit.render_results();
 ```
 
 ###TaskQueue.h
-Smart multithreading helper, designed for small overhead.
-Internally using std::atomic_flag as synchronization primitive.
-Tasks can be added from different threads.
+Smart multithreading helper, designed for small overhead
+Internally using std::atomic_flag as synchronization primitive
+Tasks can be added from different threads
 
 ```
 {
