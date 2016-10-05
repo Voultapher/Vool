@@ -183,7 +183,7 @@ template<typename T> void gnuplot::write(
 		plot_file << "# X Y\n";
 		for (const auto point : plot.points())
 			plot_file << gnuplot_util::concatenate
-			("  ", point.first, " ", point.second, "\n");
+			("  ", point.first, " ", point.second, '\n');
 
 		plot_file << "\n\n";
 	}
