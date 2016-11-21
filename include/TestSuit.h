@@ -373,6 +373,8 @@ template<typename... Ts> test_suit<Ts...>::test_suit(
 	_gnuplot.add_linestyle(4, "#E8803A", 2, 3, 8, 1.5f);
 	_gnuplot.add_linestyle(5, "#46E86C", 2, 3, 9, 1.5f);
 	_gnuplot.add_grid();
+	_gnuplot("set key top left box opaque");
+	_gnuplot("set border back");
 	_gnuplot.name_axis(_suit_config.x_name, _suit_config.y_name);
 }
 
