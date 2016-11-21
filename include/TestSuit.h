@@ -17,6 +17,7 @@
 #include <string>
 #include <tuple>
 #include <cassert>
+#include <unordered_set>
 
 #include <chrono>
 #include <random>
