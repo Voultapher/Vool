@@ -60,7 +60,7 @@ void test_TestSuit()
 		auto emptyCategory = ("Empty");
 		static_cast<void>(emptyCategory);
 
-		auto testB = make_test("build vec and sort",
+		auto testB = make_test("build vec and sorts",
 			[](const size_t size)
 			{
 				std::vector<std::vector<int>> v(size);
