@@ -1,5 +1,5 @@
 /*
-* Vool - Generic metaprogramming library focused around variadic templates
+* Vool - utility
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -10,6 +10,7 @@
 #define VOOL_UTILITY_H_INCLUDED
 
 #include <vector>
+#include <string>
 #include <tuple>
 
 #define NOT !
@@ -17,229 +18,295 @@
 namespace vool
 {
 
-	namespace util
-	{
-		// variadic compile time property check
-		template < bool CONDITION > struct true_if : std::conditional< CONDITION, std::true_type, std::false_type >::type {};
+namespace util
+{
 
-		template<typename T> struct is_double : std::is_same<T, double> {};
-		template<typename A> struct is_vector { static const bool value = false; };
-		template<typename T, typename A> struct is_vector<std::vector<T, A>> { static const bool value = true; };
+// --- variadic compile time property check ---
 
-		template<bool...> struct bool_pack;
-		template<bool... b> using all_true = std::is_same<bool_pack<true, b...>, bool_pack<b..., true>>;
-		template<bool... b> using all_false = std::is_same<bool_pack<false, b...>, bool_pack<b..., false>>;
-		template<bool... b> using some_true = true_if<NOT all_true<b...>::value && NOT all_false<b...>::value>;
+template <bool Cond> struct true_if_t : std::conditional<Cond,
+	std::true_type,
+	std::false_type>::type
+{};
 
-		template<typename... Ts> struct all_are_arithmetic : true_if<all_true<std::is_arithmetic<Ts>::value...>::value> {};
-		template<typename... Ts> struct none_are_double : true_if<all_false<is_double<Ts>::value...>::value> {};
-		template<typename... Ts> struct none_are_floating_point : true_if<all_false<std::is_floating_point<Ts>::value...>::value> {};
-		template<typename TO, typename... FROM> struct all_are_convertible : true_if<all_true<std::is_convertible<TO, FROM>::value...>::value> {};
-		template<typename... Ts> struct all_are_vector : true_if<all_true<is_vector<Ts>::value...>::value> {};
+template<typename T> struct is_double : std::is_same<T, double> {};
 
-		template<typename INT_T, typename UNIT_T, typename... Ts> struct is_impossible_int :
-			true_if<
-			(some_true<std::is_same<Ts, INT_T>::value...>::value
-				&& some_true<std::is_same<Ts, UNIT_T>::value...>::value)
-			|| (some_true<sizeof(INT_T) <= sizeof(Ts) ...>::value
-				&& none_are_floating_point<Ts...>::value)
-			> {};
+template<typename A> struct is_vector { static const bool value = false; };
+template<typename T, typename A> struct is_vector<std::vector<T, A>>
+{
+	static const bool value = true;
+};
 
-		template<bool NOT_empty, bool arith, typename... Ts> struct common_type_helper
+template<class B> struct negation : std::bool_constant<!B::value> {};
+
+
+// --- expression_if ---
+struct not_found;
+
+template<
+	bool Cond,
+	template <typename> class Expression,
+	typename T
+>
+struct expression_if
+{
+	using type = vool::util::not_found;
+};
+
+template<
+	template <typename> class Expression,
+	typename T
+>
+struct expression_if<true, Expression, T>
+{
+	using type = Expression<T>;
+};
+
+template<bool Cond, typename A, typename B> using conditional_t =
+	typename std::conditional<Cond, A, B>::type;
+
+
+// --- variadic logical binary metafunctions ---
+
+template<bool...> struct bool_pack;
+template<bool... b> using conjunction = std::is_same<
+	bool_pack<true, b...>,
+	bool_pack<b..., true>
+>;
+template<bool... b> using all_false = std::is_same<
+	bool_pack<false, b...>,
+	bool_pack<b..., false>
+>;
+template<bool... b> using disjunction = true_if_t<
+	NOT conjunction<b...>::value &&
+	NOT all_false<b...>::value
+>;
+
+template<typename... Ts> struct all_are_arithmetic : true_if_t<
+	conjunction<std::is_arithmetic<Ts>::value...>::value
+> {};
+template<typename... Ts> struct all_are_vector : true_if_t<conjunction<
+	is_vector<Ts>::value...>::value
+> {};
+
+// --- common airthmetic type ---
+
+template<typename INT_T, typename UNIT_T, typename... Ts>struct is_int_overflow :
+	true_if_t<
+	(disjunction<std::is_same<Ts, INT_T>::value...>::value
+		&& disjunction<std::is_same<Ts, UNIT_T>::value...>::value)
+	|| (disjunction<sizeof(INT_T) <= sizeof(Ts) ...>::value
+		&& all_false<std::is_floating_point<Ts>::value...>::value)
+	> {};
+
+template<bool NOT_empty, bool arith, typename... Ts> struct common_type_helper
+{
+	static_assert(NOT_empty, "Using need_arith_type you need at least one type!");
+	static_assert(arith, "Using need_arith_type, all types have to be arithmetic!");
+	using type = void;
+};
+
+template<typename... Ts> struct common_type_helper<true, true, Ts...>
+{
+	using type =
+		conditional_t<is_int_overflow<int64_t, uint64_t, Ts...>::value, double,
+		conditional_t<is_int_overflow<int32_t, uint32_t, Ts...>::value, int64_t,
+		conditional_t<is_int_overflow<int16_t, uint16_t, Ts...>::value, int32_t,
+		conditional_t<is_int_overflow<int8_t, uint8_t, Ts...>::value, int16_t,
+		typename std::common_type<Ts...>::type>>>>;
+};
+
+template<typename... Ts>
+using common_arithmetic_t = typename common_type_helper<
+	(sizeof...(Ts) > 0),
+	(all_are_arithmetic<Ts...>::value),
+	Ts...
+>::type;
+
+
+// --- fold ---
+template<typename F, typename Tuple, std::size_t... Is>
+void tuple_fold(F&& func, Tuple&& tuple, std::index_sequence<Is...>)
+{
+	static_cast<void>(
+		std::initializer_list<int>
 		{
-			static_assert(NOT_empty, "Using need_arith_type you need at least one type!");
-			static_assert(arith, "Using need_arith_type, all types have to be arithmetic!");
-			using type = void;
-		};
-
-		template<typename... Ts> struct common_type_helper<true, true, Ts...>
-		{
-			using type =
-				std::conditional_t<is_impossible_int<int64_t, uint64_t, Ts...>::value, double,
-				std::conditional_t<is_impossible_int<int32_t, uint32_t, Ts...>::value, int64_t,
-				std::conditional_t<is_impossible_int<int16_t, uint16_t, Ts...>::value, int32_t,
-				std::conditional_t<is_impossible_int<int8_t, uint8_t, Ts...>::value, int16_t,
-				std::common_type_t<Ts...>>>>>;
-		};
-
-		template<typename... Ts> using needed_arith_type_t = typename common_type_helper<
-			(sizeof...(Ts) > 0), (all_are_arithmetic<Ts...>::value), Ts...>::type;
-
-		template<typename T = void> struct nope
-		{
-			static_assert(NOT std::is_same<T, void>::value, "You may nope!");
-		};
-
-
-		// tuple iteration
-		template<typename... Ts> void wrapper(Ts&&... args) { }
-
-		//  iteration, only tuple as argument
-		template<class F, class... Ts, std::size_t... Is>
-		void for_each_in_tuple(std::tuple<Ts...>& tuple, F func, std::index_sequence<Is...>)
-		{
-			wrapper((func(std::get<Is>(tuple)), 0)...);
+			(std::forward<F>(func)(
+				std::get<Is>(std::forward<Tuple>(tuple))),
+				0
+			)...
 		}
+	);
+}
 
-		template<class F, class...Ts>
-		void for_each_in_tuple(std::tuple<Ts...>& tuple, F func)
-		{
-			for_each_in_tuple(tuple, func, std::make_index_sequence<sizeof...(Ts)>());
-		}
+template<typename F, typename Tuple> void fold(
+	F&& func,
+	Tuple&& tuple
+)
+{
+	tuple_fold(
+		std::forward<F>(func),
+		std::forward<Tuple>(tuple),
+		std::make_index_sequence<
+			std::tuple_size<std::decay<Tuple>::type>::value
+		>{}
+	);
+}
 
-		// iteration, with tuple + scalar
-		template<typename... Ts, typename S, typename F, std::size_t... Is>
-		void for_each_in_tuple(
-			std::tuple<Ts...>& tuple,
-			S& scalar,
-			F func,
-			std::index_sequence<Is...>
-		)
-		{
-			wrapper((func(std::get<Is>(tuple), scalar), 0)...);
-		}
+template<typename F, typename...Ts> void fold(
+	F&& func,
+	Ts&&... args
+)
+{
+	static_cast<void>(
+		std::initializer_list<int>
+		{ (std::forward<F>(func)(std::forward<Ts>(args)), 0)... }
+	);
+}
 
-		template<typename... Ts, typename S, typename F>
-		void for_each_in_tuple(std::tuple<Ts...>& tuple, S& scalar, F func)
-		{
-			for_each_in_tuple(tuple, scalar, func, std::make_index_sequence<sizeof...(Ts)>());
-		}
 
-		// iteration, with 3 tuples
-		template<typename... Ret, typename... A, typename... B, class F, std::size_t... Is>
-		void tuple_operator(
-			std::tuple<Ret...>& ret,
-			const std::tuple<A...>& a,
-			const std::tuple<B...>& b,
-			F func,
-			std::index_sequence<Is...>)
-		{
-			wrapper((func(std::get<Is>(ret), std::get<Is>(a), std::get<Is>(b)), 0)...);
-		}
+// ----- Concepts -----
 
-		template<typename... Ret, typename... A, typename... B, class F>
-		void tuple_operator(
-			std::tuple<Ret...>& ret,
-			const std::tuple<A...>& a,
-			const std::tuple<B...>& b,
-			F func)
-		{
-			tuple_operator(ret, a, b, func, std::make_index_sequence<sizeof...(Ret)>());
-		}
-	}
+template<template <typename> class Expression, typename T> class is_detected
+{
+private:
+	template<typename C, typename F = Expression<C>>
+	static auto overload(int ph)->F;
 
-	// a hetoregenous container(tuple) with arithmetic operations
-	template<typename... Ts> class ArithmeticStruct
-	{
-	private:
-		std::tuple<Ts...> _local;
+	template<typename C> static vool::util::not_found overload(...);
 
-	public:
-		using arith_t = util::needed_arith_type_t<Ts...>;
+public:
+	using type = decltype(overload<T>(0));
 
-		explicit ArithmeticStruct(Ts... args)
-		{
-			// only constructible if all types are arithmetic
-			// ensures that arithmetic operations are posible
-			static_assert(util::all_are_arithmetic<Ts...>::value,
-				"ArithmeticStruct can only be constructed if all types are arithmetic!");
-			_local = std::make_tuple(std::move(args)...);
-		}
+	static constexpr bool value = NOT std::is_same<
+		type,
+		vool::util::not_found
+	>::value;
+};
 
-		// custom operators
-		ArithmeticStruct operator+ (ArithmeticStruct& comp) // vec add
-		{
-			ArithmeticStruct ret(comp);
-			util::tuple_operator(ret._local, _local, comp._local,
-				[](auto& ret, const auto& a, const auto& b) { ret = a + b; });
-			return std::move(ret);
-		}
-		ArithmeticStruct operator- (ArithmeticStruct& comp) // vec add
-		{
-			ArithmeticStruct ret(comp);
-			util::tuple_operator(ret._local, _local, comp._local,
-				[](auto& ret, const auto& a, const auto& b) { ret = a - b; });
-			return std::move(ret);
-		}
-		ArithmeticStruct operator* (ArithmeticStruct& comp) // vec add
-		{
-			ArithmeticStruct ret(comp);
-			util::tuple_operator(ret._local, _local, comp._local,
-				[](auto& ret, const auto& a, const auto& b) { ret = a * b; });
-			return std::move(ret);
-		}
+template<template <typename> class Expression, typename T>
+constexpr bool is_detected_v = is_detected<Expression, T>::value;
 
-		template<typename T> ArithmeticStruct operator* (T t) // scaling
-		{
-			static_assert(std::is_arithmetic<T>::value,
-				"An ArithmeticStruct cannot be multiplied with a non artihtmetic object!");
+template<typename Expected, template <typename> class Expression, typename T>
+struct is_detected_exact : true_if_t<std::is_same<
+	typename is_detected<Expression, T>::type,
+	Expected
+>::value> {};
 
-			ArithmeticStruct ret(*this);
-			util::for_each_in_tuple(ret._local, t,
-				[](auto& ret, const auto scalar) { ret *= scalar; });
-			return std::move(ret);
-		}
+template<typename Expected, template <typename> class Expression, typename T>
+constexpr bool is_detected_exact_v = is_detected_exact<
+	Expected, Expression, T
+>::value;
 
-		// calc sum
-		arith_t sum()
-		{
-			arith_t sum = {};
-			util::for_each_in_tuple(_local, sum,
-				[](const auto& element, auto& sum) { sum += element; });
-			return sum;
-		}
+template<
+	template <typename> class Expected,
+	template <typename> class Expression,
+	typename T
+>
+struct is_detected_expression
+{
+	using type = typename expression_if<
+		is_detected<Expected, T>::value,
+		Expression,
+		T
+	>::type;
 
-		// calc product
-		arith_t product()
-		{
-			arith_t product = front();
-			if (front() != 0)
-			{
-				util::for_each_in_tuple(_local, product,
-					[](const auto& element, auto& product) { product *= element; });
-				return (product / front()); // divide by 0 evaded
-			}
-			else
-				return{}; // first element was 0, so product will be 0
-		}
+	static constexpr bool value =
+		NOT std::is_same<type, vool::util::not_found>::value
+		&& is_detected_exact<type, Expression, T>::value;
+};
 
-		bool are_all_positive()
-		{
-			static_assert((sizeof...(Ts) > 0),
-				"Checking if all of none are positive makes no sense!");
-			bool allPositive = true;
+template<
+	template <typename> class Expected,
+	template <typename> class Expression,
+	typename T
+> constexpr bool is_detected_expression_v = is_detected_expression<
+	Expected, Expression, T
+>::value;
 
-			util::for_each_in_tuple(
-				_local, allPositive,
-				[](const auto& element, auto& allPositive)
-			{
-				if (element <= 0) allPositive = false;
-			}
-			);
-			return allPositive;
-		}
+// --- def ---
+template<typename T> using def_begin = decltype(std::declval<T>().begin());
+template<typename T> using def_end = decltype(std::declval<T>().end());
 
-		// execute a lambda function for every tuple element
-		template<typename Func> void doForAll(Func func)
-		{
-			// execution order will likely not be insertion order
-			util::for_each_in_tuple(_local, func);
-		}
+template<typename T> using def_iterator_deref = decltype(
+	std::declval<typename T::iterator>().operator*()
+);
 
-		// return first and last tuple element
-		template<typename...> inline auto front()
-		{
-			static_assert((sizeof...(Ts) > 0), "There is no first tuple element to be accessed!");
-			return std::get<0>(_local);
-		}
-		template<typename...> inline auto& back()
-		{
-			static_assert((sizeof...(Ts) > 0), "There is no last tuple element to be accessed!");
-			return std::get<sizeof...(Ts)-1>(_local);
-			//return std::get<std::tuple_size<decltype(_local)>::value - 1>(_local); // alternative
-		}
-	};
+template<typename T> auto make_hash(T&& val)
+{
+	return std::hash<T>{}(std::forward<T>(val));
+}
 
+template<typename T> using def_hash = decltype(
+	make_hash(std::declval<T>())
+);
+
+template<typename T>
+using def_to_string = decltype(std::to_string(std::declval<T>()));
+
+// --- type ---
+template<typename T> using type_iterator = typename T::iterator;
+template<typename T> using type_iterator_const = const typename T::iterator;
+
+template<typename T> using type_val = typename T::value_type;
+template<typename T> using type_val_const = const typename T::value_type;
+
+// --- has ---
+template<typename T> using has_range_begin = true_if_t<
+	is_detected_expression<type_iterator, def_begin, T>::value
+	|| is_detected_expression<type_iterator_const, def_begin, T>::value
+>;
+template<typename T> using has_range_end = true_if_t<
+	is_detected_expression<type_iterator, def_end, T>::value
+	|| is_detected_expression<type_iterator_const, def_end, T>::value
+>;
+
+template<typename T> using has_range_iterator = true_if_t<
+	is_detected_expression<type_val, def_iterator_deref, T>::value
+	|| is_detected_expression<type_val_const, def_iterator_deref, T>::value
+>;
+
+// --- is ---
+template<typename T> using is_range = true_if_t<
+	has_range_begin<T>::value
+	&& has_range_end<T>::value
+	&& has_range_iterator<T>::value
+>;
+template<typename T> constexpr bool is_range_v = is_range<T>::value;
+
+template<typename T> using is_printable = true_if_t<
+	is_detected<def_to_string, T>::value
+	|| std::is_convertible<std::string, T>::value
+>;
+template<typename T> constexpr bool is_printable_v = is_printable<T>::value;
+
+template<typename T> using is_hashable = true_if_t<
+	is_detected<def_hash, T>::value
+>;
+template<typename T> constexpr bool is_hashable_v = is_hashable<T>::value;
+
+
+// --- requires ---
+template<
+	typename Result,
+	typename T,
+	template<typename> class... Concepts
+>
+using requires = std::enable_if_t<
+	conjunction<Concepts<T>::value...>::value,
+	Result
+>;
+
+template<
+	typename Result,
+	typename T,
+	template<typename> class... Concepts
+>
+using fallback = std::enable_if_t<
+	all_false<Concepts<T>::value...>::value,
+	Result
+>;
+
+}
 }
 
 #undef NOT
