@@ -13,8 +13,6 @@
 #include <string>
 #include <tuple>
 
-#define NOT !
-
 namespace vool
 {
 
@@ -25,41 +23,10 @@ namespace util
 
 template <bool Cond> struct true_if_t : std::conditional<Cond,
 	std::true_type,
-	std::false_type>::type
-{};
+	std::false_type
+>::type {};
 
-template<typename T> struct is_double : std::is_same<T, double> {};
-
-template<typename A> struct is_vector { static const bool value = false; };
-template<typename T, typename A> struct is_vector<std::vector<T, A>>
-{
-	static const bool value = true;
-};
-
-template<class B> struct negation : std::bool_constant<!B::value> {};
-
-
-// --- expression_if ---
-struct not_found;
-
-template<
-	bool Cond,
-	template <typename> class Expression,
-	typename T
->
-struct expression_if
-{
-	using type = vool::util::not_found;
-};
-
-template<
-	template <typename> class Expression,
-	typename T
->
-struct expression_if<true, Expression, T>
-{
-	using type = Expression<T>;
-};
+template<class B> struct negation : std::integral_constant<bool, !B::value> {};
 
 template<bool Cond, typename A, typename B> using conditional_t =
 	typename std::conditional<Cond, A, B>::type;
@@ -77,15 +44,12 @@ template<bool... b> using all_false = std::is_same<
 	bool_pack<b..., false>
 >;
 template<bool... b> using disjunction = true_if_t<
-	NOT conjunction<b...>::value &&
-	NOT all_false<b...>::value
+	negation<conjunction<b...>>::value &&
+	negation<all_false<b...>>::value
 >;
 
 template<typename... Ts> struct all_are_arithmetic : true_if_t<
 	conjunction<std::is_arithmetic<Ts>::value...>::value
-> {};
-template<typename... Ts> struct all_are_vector : true_if_t<conjunction<
-	is_vector<Ts>::value...>::value
 > {};
 
 // --- common airthmetic type ---
@@ -147,7 +111,7 @@ template<typename F, typename Tuple> void fold(
 		std::forward<F>(func),
 		std::forward<Tuple>(tuple),
 		std::make_index_sequence<
-			std::tuple_size<std::decay<Tuple>::type>::value
+			std::tuple_size<typename std::decay<Tuple>::type>::value
 		>{}
 	);
 }
@@ -163,65 +127,84 @@ template<typename F, typename...Ts> void fold(
 	);
 }
 
-
 // ----- Concepts -----
 
-template<template <typename> class Expression, typename T> class is_detected
+struct nonesuch;
+
+template<
+	typename Default,
+	template <typename> class Expression,
+	typename T
+>
+class detected_or
 {
 private:
 	template<typename C, typename F = Expression<C>>
 	static auto overload(int ph)->F;
 
-	template<typename C> static vool::util::not_found overload(...);
+	template<typename C> static Default overload(...);
 
 public:
 	using type = decltype(overload<T>(0));
 
-	static constexpr bool value = NOT std::is_same<
+	using value_t = std::negation<std::is_same<
 		type,
-		vool::util::not_found
-	>::value;
-};
+		Default
+	>>;
 
+	static constexpr bool value = value_t::value;
+};
+template<typename Default, template <typename> class Expression, typename T>
+using detected_or_t = typename detected_or<Default, Expression, T>::type;
+
+
+template<template <typename> class Expression, typename T>
+using is_detected = typename detected_or<
+	vool::util::nonesuch,
+	Expression,
+	T
+>;
 template<template <typename> class Expression, typename T>
 constexpr bool is_detected_v = is_detected<Expression, T>::value;
 
-template<typename Expected, template <typename> class Expression, typename T>
-struct is_detected_exact : true_if_t<std::is_same<
-	typename is_detected<Expression, T>::type,
-	Expected
->::value> {};
+template<template <typename> class Expression, typename T>
+using is_detected_t = typename is_detected<Expression, T>::type;
+
 
 template<typename Expected, template <typename> class Expression, typename T>
+using is_detected_exact = std::is_same<
+	typename std::decay<Expected>::type,
+	typename std::decay<typename is_detected<Expression, T>::type>::type
+>;
+template<typename Expected, template <typename> class Expression, typename T>
 constexpr bool is_detected_exact_v = is_detected_exact<
-	Expected, Expression, T
+	Expected,
+	Expression,
+	T
 >::value;
+
 
 template<
 	template <typename> class Expected,
 	template <typename> class Expression,
 	typename T
 >
-struct is_detected_expression
-{
-	using type = typename expression_if<
-		is_detected<Expected, T>::value,
-		Expression,
-		T
-	>::type;
-
-	static constexpr bool value =
-		NOT std::is_same<type, vool::util::not_found>::value
-		&& is_detected_exact<type, Expression, T>::value;
-};
-
+using is_detected_expression = is_detected_exact<
+	typename detected_or<struct is_expression_tag, Expected, T>::type,
+	Expression,
+	T
+>;
 template<
 	template <typename> class Expected,
 	template <typename> class Expression,
 	typename T
-> constexpr bool is_detected_expression_v = is_detected_expression<
-	Expected, Expression, T
+>
+constexpr bool is_detected_expression_v = is_detected_expression<
+	Expected,
+	Expression,
+	T
 >::value;
+
 
 // --- def ---
 template<typename T> using def_begin = decltype(std::declval<T>().begin());
@@ -231,14 +214,14 @@ template<typename T> using def_iterator_deref = decltype(
 	std::declval<typename T::iterator>().operator*()
 );
 
-template<typename T> auto make_hash(T&& val)
+/*template<typename T> auto make_hash(T&& val)
 {
 	return std::hash<T>{}(std::forward<T>(val));
 }
 
 template<typename T> using def_hash = decltype(
 	make_hash(std::declval<T>())
-);
+);*/
 
 template<typename T>
 using def_to_string = decltype(std::to_string(std::declval<T>()));
@@ -249,6 +232,8 @@ template<typename T> using type_iterator_const = const typename T::iterator;
 
 template<typename T> using type_val = typename T::value_type;
 template<typename T> using type_val_const = const typename T::value_type;
+
+template<typename T> using type_class = typename std::is_class<T>::type;
 
 // --- has ---
 template<typename T> using has_range_begin = true_if_t<
@@ -280,9 +265,16 @@ template<typename T> using is_printable = true_if_t<
 template<typename T> constexpr bool is_printable_v = is_printable<T>::value;
 
 template<typename T> using is_hashable = true_if_t<
-	is_detected<def_hash, T>::value
+	//is_detected<def_hash, T>::value
+	true
 >;
 template<typename T> constexpr bool is_hashable_v = is_hashable<T>::value;
+
+template<typename T> using is_vector = std::is_same<
+	std::vector<typename is_detected_t<type_val, T>>,
+	T
+>;
+template<typename T> constexpr bool is_vector_v = is_vector<T>::value;
 
 
 // --- requires ---
@@ -308,7 +300,5 @@ using fallback = std::enable_if_t<
 
 }
 }
-
-#undef NOT
 
 #endif // VOOL_UTILITY_H_INCLUDED
