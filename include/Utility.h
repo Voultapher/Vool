@@ -88,18 +88,22 @@ using common_arithmetic_t = typename common_type_helper<
 
 
 // --- fold ---
+
+namespace detail
+{
 template<typename F, typename Tuple, std::size_t... Is>
 void tuple_fold(F&& func, Tuple&& tuple, std::index_sequence<Is...>)
 {
 	static_cast<void>(
 		std::initializer_list<int>
-		{
-			(std::forward<F>(func)(
-				std::get<Is>(std::forward<Tuple>(tuple))),
-				0
+	{
+		(std::forward<F>(func)(
+			std::get<Is>(std::forward<Tuple>(tuple))),
+			0
 			)...
-		}
+	}
 	);
+}
 }
 
 template<typename F, typename Tuple> void fold(
@@ -107,7 +111,7 @@ template<typename F, typename Tuple> void fold(
 	Tuple&& tuple
 )
 {
-	tuple_fold(
+	detail::tuple_fold(
 		std::forward<F>(func),
 		std::forward<Tuple>(tuple),
 		std::make_index_sequence<
@@ -131,21 +135,35 @@ template<typename F, typename...Ts> void fold(
 
 struct nonesuch;
 
+namespace detail
+{
+//template <typename T, typename ...>
+//struct alias { using type = T; };
+}
+
 template<
 	typename Default,
-	template <typename> class Expression,
-	typename T
+	template<typename...> class Expression,
+	typename... Ts
 >
 class detected_or
 {
 private:
-	template<typename C, typename F = Expression<C>>
-	static auto overload(int ph)->F;
+	template<
+		template<typename...> class Alias,
+		typename... Args,
+		typename Ret_t = Alias<Args...>
+	>
+	static auto ov(int ph)->Ret_t;
 
-	template<typename C> static Default overload(...);
+	template<
+		template<typename...> class Alias,
+		typename... Args
+	>
+	static Default ov(...);
 
 public:
-	using type = decltype(overload<T>(0));
+	using type = decltype(ov<Expression, Ts...>(0));
 
 	using value_t = std::negation<std::is_same<
 		type,
@@ -154,55 +172,67 @@ public:
 
 	static constexpr bool value = value_t::value;
 };
-template<typename Default, template <typename> class Expression, typename T>
-using detected_or_t = typename detected_or<Default, Expression, T>::type;
+template<
+	typename Default,
+	template <typename...> class Expression,
+	typename... Ts
+>
+using detected_or_t = typename detected_or<Default, Expression, Ts...>::type;
 
 
-template<template <typename> class Expression, typename T>
+template<template <typename...> class Expression, typename... Ts>
 using is_detected = typename detected_or<
 	vool::util::nonesuch,
 	Expression,
-	T
+	Ts...
 >;
-template<template <typename> class Expression, typename T>
-constexpr bool is_detected_v = is_detected<Expression, T>::value;
+template<template <typename...> class Expression, typename... Ts>
+constexpr bool is_detected_v = is_detected<Expression, Ts...>::value;
 
-template<template <typename> class Expression, typename T>
-using is_detected_t = typename is_detected<Expression, T>::type;
+template<template <typename...> class Expression, typename... Ts>
+using is_detected_t = typename is_detected<Expression, Ts...>::type;
 
 
-template<typename Expected, template <typename> class Expression, typename T>
+template<
+	typename Expected,
+	template <typename...> class Expression,
+	typename... Ts
+>
 using is_detected_exact = std::is_same<
 	typename std::decay<Expected>::type,
-	typename std::decay<typename is_detected<Expression, T>::type>::type
+	typename std::decay<typename is_detected<Expression, Ts...>::type>::type
 >;
-template<typename Expected, template <typename> class Expression, typename T>
+template<
+	typename Expected,
+	template <typename...> class Expression,
+	typename... Ts
+>
 constexpr bool is_detected_exact_v = is_detected_exact<
 	Expected,
 	Expression,
-	T
+	Ts...
 >::value;
 
 
 template<
-	template <typename> class Expected,
-	template <typename> class Expression,
-	typename T
+	template <typename...> class Expected,
+	template <typename...> class Expression,
+	typename... Ts
 >
 using is_detected_expression = is_detected_exact<
-	typename detected_or<struct is_expression_tag, Expected, T>::type,
+	typename detected_or<struct is_expression_tag, Expected, Ts...>::type,
 	Expression,
-	T
+	Ts...
 >;
 template<
-	template <typename> class Expected,
-	template <typename> class Expression,
-	typename T
+	template <typename...> class Expected,
+	template <typename...> class Expression,
+	typename... Ts
 >
 constexpr bool is_detected_expression_v = is_detected_expression<
 	Expected,
 	Expression,
-	T
+	Ts...
 >::value;
 
 
