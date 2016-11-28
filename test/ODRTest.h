@@ -11,6 +11,7 @@
 
 #include <Utility.h>
 #include <Vecmap.h>
+#include <RingBuffer.h>
 #include <GNP.h>
 #include <TestSuit.h>
 #include <TaskQueue.h>
