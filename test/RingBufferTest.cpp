@@ -11,6 +11,7 @@
 #include <RingBuffer.h>
 
 #include <string>
+#include <iostream>
 
 namespace vool
 {
@@ -20,6 +21,11 @@ namespace tests
 template<typename T, size_t N> void test_impl(T val_a, T val_b)
 {
 	ring_buffer<T, N> rb;
+
+	size_t count_folds{};
+	rb.fold([&count_folds](const auto& val) -> void { ++count_folds; });
+	if (count_folds != 0)
+		throw std::exception("fold on uninitialized");
 
 	rb.push_back(val_b);
 	for (size_t i = 0; i < N-1; ++i)
@@ -36,6 +42,7 @@ template<typename T, size_t N> void test_impl(T val_a, T val_b)
 		throw std::exception("push_back() error");
 
 	rb.fold([val_a](auto& val) { val = val_a; });
+
 	for (const auto& val : rb)
 		if (val != val_a)
 			throw std::exception("fold assign error");
@@ -94,6 +101,37 @@ void test_RingBuffer()
 	test_range<std::string, 3>("short", "a bit longer, and even more");
 	test_range<std::string, 5>("short", "a bit longer, and even more");
 	test_range<std::string, 100>("short", "a bit longer, and even more");
+
+	//ring_buffer<std::string, 5> rb;
+	//auto res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("1");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("2");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("3");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("4");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("5");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//rb.push_back("6");
+	//res = merge_ring_range(rb);
+	//std::cout << "merge: " << res << '\n';
+
+	//ring_buffer<int, 5> uninit_int_rb;
+	//uninit_int_rb.fold([](const auto& val) { std::cout << val << '\n'; });
 }
 
 }

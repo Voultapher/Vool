@@ -38,19 +38,19 @@ public:
 	void push_back(const T& val)
 		noexcept(std::is_trivially_copy_assignable<T>::value)
 	{
-		buff_[index_ % N] = val;
 		++index_;
+		buff_[index_ % N] = val;
 	}
 
 	void push_back(T&& val)
 		noexcept(std::is_trivially_move_assignable<T>::value)
 	{
-		buff_[index_ % N] = std::move(val);
 		++index_;
+		buff_[index_ % N] = std::move(val);
 	}
 
-	T& front() noexcept { return buff_[(index_ - 1) % N]; }
-	T& back() noexcept { return buff_[(index_ - N) % N]; }
+	T& front() noexcept { return buff_[index_ % N]; }
+	T& back() noexcept { return buff_[(index_ + 1) % N]; }
 
 	iterator begin() noexcept { return buff_.begin(); }
 	iterator end() noexcept { return buff_.end(); }
@@ -61,7 +61,7 @@ public:
 	template<typename F> void fold(F&& func)
 		noexcept(noexcept(func(front())))
 	{
-		for (size_t i = 1, max = (index_ < N ? index_ : N) + 1; i < max; ++i)
+		for (size_t i = 0, max = index_ < N ? index_ : N ; i < max; ++i)
 			std::forward<F>(func)(buff_[(index_ - i) % N]);
 	}
 private:
