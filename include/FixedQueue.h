@@ -19,8 +19,6 @@ template<typename T, size_t N> class fixed_queue
 {
 public:
 	using buffer_t = std::array<T, N>;
-	using iterator = typename buffer_t::iterator;
-	using const_iterator = typename buffer_t::const_iterator;
 
 	explicit fixed_queue() : index_(0)
 	{
@@ -51,9 +49,6 @@ public:
 
 	T& front() noexcept { return buff_[index_ % N]; }
 	T& back() noexcept { return buff_[(index_ + 1) % N]; }
-
-	const_iterator begin() const noexcept { return buff_.cbegin(); }
-	const_iterator end() const noexcept { return buff_.cend(); }
 
 	template<typename F> void fold(F&& func)
 		noexcept(noexcept(func(front())))
