@@ -8,7 +8,7 @@
 
 #include "AllTests.h"
 
-#include <RingBuffer.h>
+#include <FixedQueue.h>
 
 #include <string>
 #include <iostream>
@@ -43,9 +43,12 @@ template<typename T, size_t N> void test_impl(T val_a, T val_b)
 
 	rb.fold([val_a](auto& val) { val = val_a; });
 
-	for (const auto& val : rb)
-		if (val != val_a)
-			throw std::exception("fold assign error");
+	rb.fold([val_a](auto val)
+		{
+			if (val != val_a)
+				throw std::exception("fold assign error");
+		}
+	);
 }
 
 template<typename T, size_t N> void test_range(T val_a, T val_b)
