@@ -17,7 +17,7 @@ namespace tests
 
 void test_Utility();
 void test_Vecmap();
-void test_RingBuffer();
+void test_FixedQueue();
 void test_GNP();
 void test_TestSuit();
 void test_TaskQueue();

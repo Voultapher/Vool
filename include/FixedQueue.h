@@ -1,5 +1,5 @@
 /*
-* Vool - Ring buffer on top of std::array
+* Vool - Fixed queue on top of std::array
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -15,25 +15,25 @@
 namespace vool
 {
 
-template<typename T, size_t N> class ring_buffer
+template<typename T, size_t N> class fixed_queue
 {
 public:
 	using buffer_t = std::array<T, N>;
 	using iterator = typename buffer_t::iterator;
 	using const_iterator = typename buffer_t::const_iterator;
 
-	explicit ring_buffer() : index_(0)
+	explicit fixed_queue() : index_(0)
 	{
-		static_assert(N > 0, "ring_buffer size should be larger than zero!");
+		static_assert(N > 0, "fixed_queue size should be larger than zero!");
 	};
 
-	~ring_buffer() {};
+	~fixed_queue() {};
 
-	ring_buffer(const ring_buffer&) = default;
-	ring_buffer(ring_buffer&&) = default;
+	fixed_queue(const fixed_queue&) = default;
+	fixed_queue(fixed_queue&&) = default;
 
-	ring_buffer& operator= (const ring_buffer&) = default;
-	ring_buffer& operator= (ring_buffer&&) = default;
+	fixed_queue& operator= (const fixed_queue&) = default;
+	fixed_queue& operator= (fixed_queue&&) = default;
 
 	void push_back(const T& val)
 		noexcept(std::is_trivially_copy_assignable<T>::value)
@@ -52,11 +52,8 @@ public:
 	T& front() noexcept { return buff_[index_ % N]; }
 	T& back() noexcept { return buff_[(index_ + 1) % N]; }
 
-	iterator begin() noexcept { return buff_.begin(); }
-	iterator end() noexcept { return buff_.end(); }
-
-	const_iterator cbegin() const noexcept { return buff_.cbegin(); }
-	const_iterator cend() const noexcept { return buff_.cend(); }
+	const_iterator begin() const noexcept { return buff_.cbegin(); }
+	const_iterator end() const noexcept { return buff_.cend(); }
 
 	template<typename F> void fold(F&& func)
 		noexcept(noexcept(func(front())))
@@ -70,7 +67,7 @@ private:
 };
 
 template<typename T, size_t N> T merge_ring_range(
-	ring_buffer<T, N>& client_agents
+	fixed_queue<T, N>& client_agents
 )
 {
 	T ret;

@@ -1,5 +1,5 @@
 /*
-* Vool - Unit tests for ring_buffer
+* Vool - Unit tests for fixed_queue
 *
 * Copyright (c) 2016 Lukas Bergdoll - www.lukas-bergdoll.net
 *
@@ -20,7 +20,7 @@ namespace tests
 
 template<typename T, size_t N> void test_impl(T val_a, T val_b)
 {
-	ring_buffer<T, N> rb;
+	fixed_queue<T, N> rb;
 
 	size_t count_folds{};
 	rb.fold([&count_folds](const auto& val) -> void { ++count_folds; });
@@ -52,7 +52,7 @@ template<typename T, size_t N> void test_range(T val_a, T val_b)
 {
 	test_impl<T, N>(val_a, val_b);
 
-	ring_buffer<T, N> rb;
+	fixed_queue<T, N> rb;
 	
 	if (N == 1)
 	{
@@ -87,7 +87,7 @@ template<typename T, size_t N> void test_range(T val_a, T val_b)
 		throw std::exception("merge range size > 2 error");
 }
 
-void test_RingBuffer()
+void test_FixedQueue()
 {
 	//test_impl<int, 0>(4, 8);
 	test_impl<int, 1>(7, 5);
@@ -102,7 +102,7 @@ void test_RingBuffer()
 	test_range<std::string, 5>("short", "a bit longer, and even more");
 	test_range<std::string, 100>("short", "a bit longer, and even more");
 
-	//ring_buffer<std::string, 5> rb;
+	//fixed_queue<std::string, 5> rb;
 	//auto res = merge_ring_range(rb);
 	//std::cout << "merge: " << res << '\n';
 
@@ -130,7 +130,7 @@ void test_RingBuffer()
 	//res = merge_ring_range(rb);
 	//std::cout << "merge: " << res << '\n';
 
-	//ring_buffer<int, 5> uninit_int_rb;
+	//fixed_queue<int, 5> uninit_int_rb;
 	//uninit_int_rb.fold([](const auto& val) { std::cout << val << '\n'; });
 }
 
