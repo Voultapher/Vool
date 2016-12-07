@@ -6,8 +6,8 @@
 * This code is licensed under the Apache License 2.0 (https://opensource.org/licenses/Apache-2.0)
 */
 
-#ifndef VOOL_RINGBUFFER_H_INCLUDED
-#define VOOL_RINGBUFFER_H_INCLUDED
+#ifndef VOOL_FIXEDQUEUE_H_INCLUDED
+#define VOOL_FIXEDQUEUE_H_INCLUDED
 
 #include <array>
 #include <type_traits>
@@ -83,4 +83,4 @@ template<typename T, size_t N> T merge_ring_range(
 
 }
 
-#endif // VOOL_RINGBUFFER_H_INCLUDED
+#endif // VOOL_FIXEDQUEUE_H_INCLUDED
