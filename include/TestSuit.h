@@ -363,7 +363,10 @@ template<typename... Ts> test_suit<Ts...>::test_suit(
 ) :
 	_suit_config(suit_configuration),
 	_categorys(std::forward<Ts>(categorys)...),
-	_gnuplot(_suit_config.gnuplot_path)
+	_gnuplot(_suit_config.persistent
+		? std::string(std::string(_suit_config.gnuplot_path) + " --persist").c_str()
+		: _suit_config.gnuplot_path
+	)
 {
 	_gnuplot.set_terminal_window(_suit_config.x_res, _suit_config.y_res);
 
