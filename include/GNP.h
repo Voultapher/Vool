@@ -24,31 +24,31 @@ class gnuplot
 public:
 	using filepath_t = const char*;
 
-	explicit gnuplot(filepath_t);
+	inline explicit gnuplot(filepath_t);
 
 	gnuplot(const gnuplot&) = delete;
-	gnuplot(gnuplot&&);
+	inline gnuplot(gnuplot&&);
 
 	gnuplot& operator=(const gnuplot&) = delete;
-	gnuplot& operator=(gnuplot&&);
+	inline gnuplot& operator=(gnuplot&&);
 
-	~gnuplot() noexcept;
+	inline ~gnuplot() noexcept;
 
 	template<typename... Ts> void operator() (Ts&&...);
 
-	void name_axis(
+	inline void name_axis(
 		const std::string& = "x-axis",
 		const std::string& = "y-axis",
 		const std::string& = "z-axis"
 	);
 
-	void set_terminal_png(const uint32_t, const uint32_t);
+	inline void set_terminal_png(const uint32_t, const uint32_t);
 
-	void set_terminal_window(const uint32_t, const uint32_t);
+	inline void set_terminal_window(const uint32_t, const uint32_t);
 
-	void set_png_filename(filepath_t);
+	inline void set_png_filename(filepath_t);
 
-	void add_linestyle(
+	inline void add_linestyle(
 		const uint32_t,
 		const std::string&,
 		const uint32_t = 2,
@@ -57,7 +57,7 @@ public:
 		const float = 1.5f
 	);
 
-	void add_grid();
+	inline void add_grid();
 
 	template<typename T> void write_and_plot(
 		const std::vector<plot_data_2D<T>>&,
@@ -220,6 +220,124 @@ template<typename T> void gnuplot::plot(
 	operator()(command);
 }
 
+#include <stdexcept>
+
+#ifdef _WIN32
+#define PIPE_OPEN _popen
+#define PIPE_CLOSE _pclose
+#else
+#define PIPE_OPEN popen
+#define PIPE_CLOSE pclose
+#endif
+
+gnuplot::gnuplot(filepath_t filepath)
+{
+	//gnuplot_path += "\\gnuplot -persist";
+	_gnuplot_pipe = PIPE_OPEN(filepath, "w");
+
+	if (_gnuplot_pipe == NULL) // PIPE_OPEN itself failed
+		throw std::runtime_error("PIPE_OPEN failed");
+
+	if (PIPE_CLOSE(_gnuplot_pipe) != 0) // command failed
+		throw std::runtime_error("gnuplot filepath not found");
+
+	_gnuplot_pipe = PIPE_OPEN(filepath, "w");
 }
+
+gnuplot::gnuplot(gnuplot&& other) :
+	_gnuplot_pipe(std::move(other._gnuplot_pipe))
+{
+	other._gnuplot_pipe = nullptr; // indicate that it was moved
+}
+
+gnuplot& gnuplot::operator=(gnuplot&& other)
+{
+	if (this != std::addressof(other))
+	{
+		_gnuplot_pipe = std::move(other._gnuplot_pipe);
+		other._gnuplot_pipe = nullptr; // indicate that it was moved
+	}
+	return *this;
+}
+
+gnuplot::~gnuplot() noexcept
+{
+	if (_gnuplot_pipe != nullptr)
+	{
+		fprintf(_gnuplot_pipe, "exit\n");
+		PIPE_CLOSE(_gnuplot_pipe);
+	}
+}
+
+void gnuplot::name_axis(
+	const std::string& x_label,
+	const std::string& y_label,
+	const std::string& z_zabel
+)
+{
+	operator()("set xlabel \"" + x_label + "\"");
+	operator()("set ylabel \"" + y_label + "\"");
+	operator()("set zlabel \"" + z_zabel + "\"");
+}
+
+void gnuplot::set_terminal_png(
+	const uint32_t horizontal_res,
+	const uint32_t vertical_res
+)
+{
+	operator()(
+		"set terminal pngcairo enhanced font 'Verdana,12' background rgb '#FCFCFC' size ",
+		horizontal_res, ", ", vertical_res
+	);
+}
+
+void gnuplot::set_terminal_window(
+	const uint32_t horizontal_res,
+	const uint32_t vertical_res
+)
+{
+	operator()(
+		"set terminal wxt enhanced font 'Verdana,12' background rgb '#FCFCFC' size ",
+		horizontal_res, ", ", vertical_res
+	);
+}
+
+void gnuplot::set_png_filename(filepath_t filename)
+{
+	// subdirectorys do not work
+	operator()("set output \"", filename, ".png\"");
+}
+
+void gnuplot::add_linestyle(
+	const uint32_t index,
+	const std::string& color,
+	const uint32_t linewidth,
+	const uint32_t linetype,
+	const uint32_t pointtype,
+	const float pointsize
+)
+{
+	operator()(
+		"set style line ", index,
+		" lc rgb \"" + color +
+		"\" lw ", linewidth,
+		" dashtype ", linetype,
+		" pt ", pointtype,
+		" ps ", pointsize
+	);
+}
+
+void gnuplot::add_grid()
+{
+	operator()("set style line 11 lc rgb '#4F4A4A' dashtype 1 lw 1");
+	operator()("set border 3 back ls 11");
+	operator()("set style line 12 lc rgb '#636161' dashtype 3 lw 1");
+	operator()("set grid back ls 12");
+}
+
+}
+
+#undef PIPE_OPEN
+#undef PIPE_CLOSE
 
 #endif // VOOL_GNP_H_INCLUDED
