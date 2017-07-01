@@ -27,7 +27,7 @@ Easiest way is to download the entire project, compile it and take a look at mai
 
 ## Features
 
-###Vecmap.h
+### Vecmap.h
 A key value container built on top of std::vector  
 For an in depth explanation and benchmarks read this [blog post](http://www.lukas-bergdoll.net/blog/2016/1/31/big-o-pitfalls)
 
@@ -37,7 +37,7 @@ map.insert(key, value);
 V lookup = map[key]; // value lookup using binary search
 ```
 
-###GNP.h
+### GNP.h
 A gnuplot pipe interface, built for convenience. Features include:
 * Easy string concatenation
 * Simple presets for live window or png output
@@ -62,7 +62,7 @@ gnp.set_png_filename("TestGraph");
 gnp("plot sin(x) ls 1"); // should save plot of sin(x) as png file
 ```
 
-###TestSuit.h
+### TestSuit.h
 Benchmarking tool using GNP to visualize its results
 
 ```cpp
@@ -88,7 +88,7 @@ suit.perform_categorys(0, size);
 suit.render_results();
 ```
 
-###TaskQueue.h
+### TaskQueue.h
 Smart multithreading helper, designed for small overhead  
 Internally using `std::atomic_flag` as synchronization primitive  
 Tasks can be added from different threads
